@@ -1,0 +1,12 @@
+# Maestro E2E Test Flow
+# Run with: maestro test .maestro/app_launch_flow.yaml
+# Prerequisite: install Maestro CLI (https://maestro.mobile.dev)
+#   curl -Ls "https://get.maestro.mobile.dev" | bash
+
+appId: com.example.tesaxrail
+---
+# Flow: Verify app launches and displays greeting
+
+- launchApp
+
+- assertVisible: "Hello Android!"

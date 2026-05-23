@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Run Mobile E2E Tests",
+  "description": "Triggers automated E2E testing on all available mobile devices (Android and iOS), takes screenshots at each step, captures failures, and generates a .docx report with embedded screenshots.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run E2E tests on all available mobile devices using mobile-mcp. Follow the #mobile-e2e-testing steering guide. Steps: 1) List available devices (Android and iOS). 2) Launch the app on each device. 3) Execute all test cases defined in the project's test plan or infer from the UI. 4) Take a screenshot after EVERY assertion — save as e2e-{platform}-{test-name}-pass.png or e2e-{platform}-{test-name}-FAIL.png in the e2e-screenshots/ folder. 5) On ANY failure, immediately take a screenshot before continuing. 6) After all tests, generate an e2e-test-report.docx with results table and embedded screenshots (especially failures). Report device info, pass/fail counts, and findings."
+  }
+}

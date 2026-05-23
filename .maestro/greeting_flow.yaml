@@ -1,0 +1,13 @@
+# Maestro E2E Test Flow
+# Run with: maestro test .maestro/greeting_flow.yaml
+
+appId: com.example.tesaxrail
+---
+# Flow: Verify the greeting text is visible on screen
+
+- launchApp
+
+- assertVisible: "Hello Android!"
+
+# Take a screenshot for visual verification
+- takeScreenshot: greeting_screen
