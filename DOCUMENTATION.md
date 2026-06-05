@@ -172,6 +172,21 @@ The agent will:
 
 ---
 
+## What's Already Included (Workspace Level)
+
+When you clone this repo, everything is already set up:
+
+| What | Location | You Get |
+|------|----------|---------|
+| **MCP Config** | `.kiro/settings/mcp.json` | mobile-mcp auto-connects to your emulator/simulator |
+| **Hook** | `.kiro/hooks/mobile-e2e-test.kiro.hook` | One-click ▶️ button to run E2E tests |
+| **Power** | `powers/mobile-e2e-tester/` | Agent knows best practices, platform tricks, report format |
+| **Steering** | `.kiro/steering/mobile-e2e-testing.md` | Extra context available via `#mobile-e2e-testing` in chat |
+
+**No additional setup needed in Kiro** — just update `ANDROID_HOME` path and you're good.
+
+---
+
 ## Sharing This Tool
 
 Want someone else to use this?
@@ -183,7 +198,7 @@ Want someone else to use this?
 5. Install the app on emulator
 6. Click ▶️ on "Run Mobile E2E Tests" hook
 
-That's it — works on their machine.
+That's it — hook, power, steering, and MCP config all come with the repo.
 
 ---
 
