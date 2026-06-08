@@ -2,13 +2,12 @@
 
 ## What is This?
 
-An automated E2E testing tool that runs on your Android emulator or iOS simulator. You click one button in Kiro IDE, and it:
+An automated E2E testing tool that runs on your Android emulator or iOS simulator. It can:
 
-1. Detects your running device
-2. Launches your app
-3. Runs through test flows (tap, type, swipe)
-4. Takes a screenshot on every assertion
-5. Generates a `.docx` report with all screenshots embedded
+1. **Generate test scripts** from your codebase or requirement docs
+2. **Execute tests** automatically (tap, type, swipe, assert)
+3. **Screenshot every step** (pass and fail)
+4. **Generate a report** (.docx) with coverage metrics and requirement traceability
 
 ---
 
@@ -47,73 +46,106 @@ Open `.kiro/settings/mcp.json` and update the path to your Android SDK:
 | Linux | `~/Android/Sdk` |
 | Windows | `%LOCALAPPDATA%\Android\Sdk` |
 
-### 3. Run Tests
+### 3. Run
 
-**Option A — One Click:**
-1. Open **Agent Hooks** panel (sidebar)
-2. Find **"Run Mobile E2E Tests"**
-3. Click ▶️
-4. Done — wait for results
+Open **Agent Hooks** panel in Kiro sidebar. You'll see 4 hooks — use them in order:
 
-**Option B — Chat:**
+---
+
+## Available Hooks (Actions)
+
+| # | Hook | What it does |
+|---|------|-------------|
+| 1 | **Generate Tests from Codebase** ▶️ | Scans source code → generates YAML test scripts |
+| 2 | **Generate Tests from Requirements** ▶️ | Reads requirement docs (.md, .pdf, .docx) → generates YAML test scripts |
+| 3 | **Execute Test Scripts** ▶️ | Runs YAML scripts on emulator → screenshots → .docx report with coverage |
+| 4 | **Run Mobile E2E Tests** ▶️ | Quick mode — infers tests from UI directly, no YAML needed |
+
+---
+
+## Full Workflow (Recommended)
+
 ```
-Run E2E tests on my app
+STEP 1: Generate test scripts (pick one)
+┌─────────────────────────────────────────────────────┐
+│                                                       │
+│  ▶️ "Generate Tests from Codebase"                    │
+│  → Agent scans your source code (Compose/SwiftUI/XML) │
+│  → Finds screens, buttons, text fields, flows         │
+│  → Outputs: e2e-tests/*.yaml + coverage.yaml          │
+│                                                       │
+│  OR                                                   │
+│                                                       │
+│  ▶️ "Generate Tests from Requirements"                │
+│  → Agent reads docs/ folder (.md, .pdf, .docx)       │
+│  → Extracts testable acceptance criteria              │
+│  → Outputs: e2e-tests/*.yaml + traceability.yaml     │
+│                                                       │
+└─────────────────────────────────────────────────────┘
+
+STEP 2: Execute tests
+┌─────────────────────────────────────────────────────┐
+│                                                       │
+│  ▶️ "Execute Test Scripts"                            │
+│  → Reads e2e-tests/*.yaml                            │
+│  → Launches app on emulator                          │
+│  → Executes each step (tap, type, assert)            │
+│  → Screenshots every assertion                        │
+│  → Generates e2e-test-report.docx with:              │
+│     • Results table (pass/fail)                       │
+│     • Requirement traceability                        │
+│     • Coverage metrics                                │
+│     • Coverage gaps                                   │
+│     • All screenshots embedded                        │
+│                                                       │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## What Happens When You Run It
+## Quick Mode (Skip YAML generation)
 
-```
-You click ▶️
-    │
-    ▼
-Agent detects your emulator/simulator
-    │
-    ▼
-Kills and relaunches your app (fresh state)
-    │
-    ▼
-Takes initial screenshot (baseline)
-    │
-    ▼
-For each test:
-    ├── Performs action (tap button, type text, etc.)
-    ├── Checks if expected result appeared
-    ├── Takes screenshot → saves to e2e-screenshots/
-    │       ├── PASS → e2e-android-01-test-name-pass.png
-    │       └── FAIL → e2e-android-01-test-name-FAIL.png
-    └── Continues to next test
-    │
-    ▼
-Generates e2e-test-report.docx
-    │
-    ▼
-Done ✅ — report + screenshots saved in project root
-```
+If you just want a fast test without generating scripts first:
+
+1. Click ▶️ **"Run Mobile E2E Tests"**
+2. Agent infers tests directly from the UI
+3. Screenshots + basic report generated
+
+Use this for quick checks. Use the full workflow for formal testing with traceability.
 
 ---
 
 ## Output Files
 
-After a test run, you'll find:
+After a full run:
 
 ```
 your-project/
-├── e2e-screenshots/
-│   ├── e2e-android-00-initial-state.png
-│   ├── e2e-android-01-greeting-flow-pass.png
-│   ├── e2e-android-02-counter-increment-pass.png
-│   └── e2e-android-03-some-test-FAIL.png    ← failures highlighted
-└── e2e-test-report.docx                      ← full report with screenshots
+├── e2e-tests/                        ← Generated test scripts (reusable)
+│   ├── 01-app-launch.yaml
+│   ├── 02-greeting-flow.yaml
+│   ├── 03-counter-increment.yaml
+│   ├── coverage.yaml                 ← Element coverage metrics
+│   └── traceability.yaml             ← Requirement → test mapping
+├── e2e-screenshots/                   ← Visual evidence
+│   ├── e2e-android-01-greeting-pass.png
+│   ├── e2e-android-02-counter-pass.png
+│   └── e2e-android-03-something-FAIL.png
+└── e2e-test-report.docx              ← Full report for stakeholders
 ```
 
-The `.docx` report contains:
-- Device info + timestamp
-- Pass/fail summary
-- Results table (test name, expected, actual, status)
-- All screenshots embedded (failures shown prominently)
-- Findings & observations
+---
+
+## Report Contents
+
+The `.docx` report includes:
+
+1. **Executive Summary** — total tests, pass/fail count, coverage %
+2. **Results Table** — test name, requirement ID, expected, actual, status
+3. **Requirement Traceability** — which requirement is covered by which test
+4. **Coverage Metrics** — elements tested vs total, gaps identified
+5. **Failure Details** — screenshots + suggested fixes for each failure
+6. **All Screenshots** — embedded visual evidence
 
 ---
 
@@ -126,37 +158,51 @@ The `.docx` report contains:
 | iOS | Simulator | `mobile_type_keys` (native) |
 | iOS | Physical device | `mobile_type_keys` (native) |
 
-Both platforms use the same test flow — the agent automatically adapts based on which device it detects.
+Both platforms use the same flow — agent adapts automatically.
 
 ---
 
-## Customizing Tests
+## Requirement Document Formats
 
-The agent infers tests from your app's UI. But you can also tell it what to test:
+For "Generate Tests from Requirements", the agent reads:
 
-```
-Run E2E tests on my app. Test these flows:
-1. Type "John" in the name field, tap Submit, verify "Hello, John!" appears
-2. Tap the +1 button 5 times, verify counter shows 5
-3. Tap Reset, verify counter goes back to 0
-```
+| Format | Location | Example |
+|--------|----------|---------|
+| Markdown | `docs/*.md` | User stories, acceptance criteria |
+| PDF | `docs/*.pdf` | Functional spec documents |
+| DOCX | `docs/*.docx` | Word requirement docs |
+| Text | `docs/*.txt` | Plain text specs |
 
-The agent will follow your instructions and screenshot each step.
+Put your requirement docs in `docs/` or `requirements/` folder.
 
 ---
 
-## Cross-Platform Testing
+## What's Already Included (Workspace Level)
 
-If you have both Android emulator and iOS simulator running:
+When you clone this repo, everything is ready:
 
-```
-Run E2E tests on all available devices
-```
+| What | Location | You Get |
+|------|----------|---------|
+| **MCP Config** | `.kiro/settings/mcp.json` | mobile-mcp auto-connects to device |
+| **Hooks (4x)** | `.kiro/hooks/` | All 4 action triggers |
+| **Power** | `powers/mobile-e2e-tester/` | Agent knowledge (SOP for testing) |
+| **Steering** | Power steering files | Detailed guides (YAML schema, platform tips, report format) |
 
-The agent will:
-1. Run tests on Android first
-2. Run the same tests on iOS
-3. Generate one combined report comparing both platforms
+**Setup:** Just update `ANDROID_HOME` path → start emulator → click ▶️.
+
+---
+
+## Sharing / Reuse on Other Projects
+
+To use this on any other mobile project:
+
+1. Copy `.kiro/` and `powers/` folders into the project
+2. Update `ANDROID_HOME` in `.kiro/settings/mcp.json`
+3. Start emulator with the app installed
+4. Open project in Kiro
+5. Click hooks — agent scans **that project's** codebase/docs
+
+Everything is generic — no hardcoded references to any specific app.
 
 ---
 
@@ -167,38 +213,9 @@ The agent will:
 | "No devices found" | Start your emulator/simulator first |
 | Text not typing (Android) | Run: `adb shell settings put secure stylus_handwriting_enabled 0` |
 | App won't launch | Verify package name — run `adb shell pm list packages` to check |
-| mobile-mcp not working | Check `.kiro/settings/mcp.json` has correct `ANDROID_HOME` path, restart Kiro |
+| mobile-mcp not working | Check `.kiro/settings/mcp.json`, restart Kiro |
 | "python-docx not found" | Run: `pip3 install python-docx` |
-
----
-
-## What's Already Included (Workspace Level)
-
-When you clone this repo, everything is already set up:
-
-| What | Location | You Get |
-|------|----------|---------|
-| **MCP Config** | `.kiro/settings/mcp.json` | mobile-mcp auto-connects to your emulator/simulator |
-| **Hook** | `.kiro/hooks/mobile-e2e-test.kiro.hook` | One-click ▶️ button to run E2E tests |
-| **Power** | `powers/mobile-e2e-tester/` | Agent knows best practices, platform tricks, report format |
-| **Steering** | `.kiro/steering/mobile-e2e-testing.md` | Extra context available via `#mobile-e2e-testing` in chat |
-
-**No additional setup needed in Kiro** — just update `ANDROID_HOME` path and you're good.
-
----
-
-## Sharing This Tool
-
-Want someone else to use this?
-
-1. They clone this repo
-2. Open in Kiro IDE
-3. Update `ANDROID_HOME` in `.kiro/settings/mcp.json`
-4. Start their emulator
-5. Install the app on emulator
-6. Click ▶️ on "Run Mobile E2E Tests" hook
-
-That's it — hook, power, steering, and MCP config all come with the repo.
+| No YAML files found | Run "Generate Tests from Codebase" first |
 
 ---
 
@@ -206,5 +223,16 @@ That's it — hook, power, steering, and MCP config all come with the repo.
 
 - Runs on **local devices only** (no cloud device farms yet)
 - Tests run **one device at a time** (sequential)
-- Report saved **locally** (manual upload to Google Docs needed)
-- Needs emulator/simulator **already running** before you start
+- Report saved **locally** (manual upload needed)
+- Emulator must be **already running** before you start
+- **Baseline comparison** (POB-206) not yet implemented
+
+---
+
+## Tech Stack
+
+| Component | What | Link |
+|-----------|------|------|
+| mobile-mcp | Controls Android/iOS devices via MCP | [github.com/mobile-next/mobile-mcp](https://github.com/mobile-next/mobile-mcp) |
+| Kiro IDE | AI agent that orchestrates everything | [kiro.dev](https://kiro.dev) |
+| python-docx | Generates .docx reports | [pypi.org/project/python-docx](https://pypi.org/project/python-docx/) |
