@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Generate Tests from Codebase",
+  "description": "Scans the app's source code (Compose, SwiftUI, XML layouts), identifies screens, interactive elements, and user flows, then generates reusable YAML test scripts in e2e-tests/ folder.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Scan the mobile app source code in this workspace. Find all UI source files (Kotlin Compose, SwiftUI, XML layouts). For each screen: 1) Identify all interactive elements (TextField, Button, Checkbox, etc.) with their accessibility labels or contentDescription. 2) Identify user flows (what happens on tap, state changes, navigation). 3) Generate YAML test scripts in e2e-tests/ folder following the schema in the generate-from-codebase steering file. 4) Generate e2e-tests/coverage.yaml listing all elements found and which are covered. Output a summary of how many screens found, elements identified, and test scripts generated."
+  }
+}

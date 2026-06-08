@@ -2,7 +2,7 @@
 name: "mobile-e2e-tester"
 displayName: "Mobile E2E Tester"
 description: "Automated end-to-end testing for Android and iOS mobile apps with screenshot capture on every assertion. Generates .docx reports with embedded screenshots for test documentation."
-keywords: ["mobile", "e2e", "testing", "screenshot", "android", "ios", "emulator", "simulator"]
+keywords: ["mobile", "e2e", "testing", "screenshot", "android", "ios", "emulator", "simulator", "test-script", "coverage", "requirements", "codebase"]
 author: "Yobel"
 ---
 
@@ -24,6 +24,9 @@ Key capabilities:
 - **android-testing** — Android-specific workflows, ADB tips, and common issues
 - **ios-testing** — iOS-specific workflows, simulator handling, and gesture navigation
 - **report-generation** — How to generate and customize the .docx test report
+- **generate-from-codebase** — Auto-generate test scripts by analyzing source code (POB-202)
+- **generate-from-requirements** — Auto-generate test scripts from functional requirement docs (POB-203)
+- **report-coverage** — Enhanced reporting with coverage metrics and requirement traceability (POB-205)
 
 ## Onboarding
 
@@ -86,6 +89,56 @@ Before running tests, verify devices are available:
 3. Capture element tree state via `mobile_list_elements_on_screen`
 4. Continue with remaining tests (don't stop)
 5. Generate report with failures prominently marked ❌
+
+### Workflow 4: Generate Test Scripts from Codebase (POB-202)
+
+**Goal:** Read app source code and auto-generate reusable YAML test scripts.
+
+**Trigger:**
+```
+Generate test scripts from the codebase
+```
+
+**Steps:**
+1. Agent reads source files (Compose/SwiftUI/XML)
+2. Identifies screens, interactive elements, and state changes
+3. Generates YAML test scripts in `e2e-tests/` directory
+4. Outputs coverage.yaml showing element coverage
+
+### Workflow 5: Generate Test Scripts from Requirements (POB-203)
+
+**Goal:** Parse requirement docs and auto-generate test scripts with traceability.
+
+**Trigger:**
+```
+Generate test scripts from docs/requirements.md
+```
+
+**Steps:**
+1. Agent reads requirement document (MD, pasted text, or user stories)
+2. Extracts testable acceptance criteria
+3. Generates YAML test scripts with `requirement_id` field
+4. Outputs traceability.yaml mapping requirements → test scripts
+
+### Workflow 6: Report with Coverage & Traceability (POB-205)
+
+**Goal:** Generate enhanced report with coverage metrics and requirement traceability.
+
+**Trigger:**
+```
+Run E2E tests with coverage report
+```
+
+**Steps:**
+1. Execute tests (screenshots at every step)
+2. Read coverage.yaml and traceability.yaml
+3. Generate .docx report with:
+   - Executive summary (pass/fail/coverage %)
+   - Results table with requirement IDs
+   - Requirement traceability matrix
+   - Coverage metrics (elements, requirements, platforms)
+   - Coverage gaps highlighted
+   - Failure details with suggested fixes
 
 ## Test Execution Protocol
 

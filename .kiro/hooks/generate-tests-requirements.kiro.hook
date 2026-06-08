@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Generate Tests from Requirements",
+  "description": "Reads functional requirement documents (Markdown, text, user stories) from the workspace, extracts testable acceptance criteria, and generates YAML test scripts with requirement traceability in e2e-tests/ folder.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Find and read all requirement documents in this workspace. Look in docs/, requirements/, or root for files matching: *.md, *.pdf, *.docx, *.txt. Read all of them — Markdown files directly, PDF/DOCX via attachment parsing. For each testable requirement found: 1) Extract the acceptance criteria. 2) Map to concrete test steps (action + expected result). 3) Generate YAML test scripts in e2e-tests/ folder with requirement_id field for traceability. 4) Generate e2e-tests/traceability.yaml mapping every requirement to its test scripts. Follow the schema in the generate-from-requirements steering file. Output a summary of requirements found, test scripts generated, and coverage percentage."
+  }
+}

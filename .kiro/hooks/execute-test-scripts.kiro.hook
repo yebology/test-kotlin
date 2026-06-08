@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Execute Test Scripts",
+  "description": "Executes all YAML test scripts in e2e-tests/ folder against the running emulator/simulator, takes screenshots at every assertion, and generates a .docx report with coverage metrics and requirement traceability.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Read all YAML test script files in e2e-tests/ folder. For each script: 1) Launch the app fresh (terminate + relaunch). 2) Execute each step (tap, type, swipe, assert) using mobile-mcp tools. 3) On assert steps, verify the condition using mobile_list_elements_on_screen. 4) Take screenshot after every assertion — save to e2e-screenshots/ with naming convention e2e-{platform}-{test-number}-{test-name}-{pass|FAIL}.png. 5) If assertion fails, screenshot immediately and continue. After all scripts are executed, generate e2e-test-report.docx with: executive summary, results table with requirement IDs, requirement traceability matrix (from e2e-tests/traceability.yaml), coverage metrics (from e2e-tests/coverage.yaml), coverage gaps, failure details with screenshots, and all screenshots embedded. Follow the report-coverage steering file format."
+  }
+}
