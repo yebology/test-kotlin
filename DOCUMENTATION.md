@@ -165,12 +165,28 @@ your-project/
 
 ## Excel Report Format
 
-Columns:
+The Excel has **2 sheets:**
+
+### Sheet 1: Test Results
 
 | User Flow | Test No. | Test Scenario | Test Steps | Expected Results | Status | Actual Results | Screenshot |
 |-----------|----------|---------------|------------|-----------------|--------|---------------|------------|
 | Home | T001 | Greeting flow | 1. Tap name field... | "Hello, Kiro!" | Passed | "Hello, Kiro!" | e2e-android-01-pass.png |
 | Home | T002 | Empty name | 1. Tap Say Hello... | Error shown | Failed | Shows "Hello, !" | e2e-android-02-FAIL.png |
+| ... | ... | ... | ... | ... | ... | ... | ... |
+| **Summary** | | | | | | **23 Passed, 2 Failed, 5 Skipped (Total: 30)** | |
+
+### Sheet 2: Coverage Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Test Cases | 30 |
+| Executed | 25 |
+| Passed | 23 |
+| Failed | 2 |
+| Skipped | 5 |
+| Pass Rate | 92% |
+| Coverage | 83% |
 
 **Rules:**
 - Passed → Actual Results = same as Expected
@@ -180,7 +196,8 @@ Columns:
 
 **Writing behavior:**
 - Excel file created at the START of the run (with headers)
-- Each test case result written IMMEDIATELY after completion (per test case, not per module)
+- Each test case result written IMMEDIATELY after completion
+- Sheet 2 and summary row recalculated after EVERY test case
 - If interrupted mid-run, all completed test cases are already saved
 - Progress reported to user per module (not per test case)
 - **Batch limit: 10 test cases per session** — prevents hitting platform tool call limit

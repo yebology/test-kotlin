@@ -219,11 +219,11 @@ All screenshots saved to: `{project_root}/e2e-screenshots/`
 ## Report Generation
 
 ### Format
-Reports are generated as `.docx` files using `python-docx` with:
-- Title and metadata (device, date, platform)
-- Test results table (test name, expected, actual, status)
-- Embedded screenshots (especially failures)
-- Findings and observations section
+Reports are generated as `.xlsx` (Excel) files with 2 sheets:
+- **Sheet 1 "Test Results"** — per test case: User Flow, Test No., Scenario, Steps, Expected, Status, Actual, Screenshot + summary row at bottom
+- **Sheet 2 "Coverage Summary"** — totals: executed, passed, failed, skipped, pass rate %, coverage %
+
+Both sheets update after every single test case completion.
 
 ### Report Structure
 ```
