@@ -1,13 +1,13 @@
 {
   "enabled": true,
   "name": "Generate Tests from Codebase",
-  "description": "Scans the app's source code (Compose, SwiftUI, XML layouts), identifies screens, interactive elements, and user flows, then generates reusable YAML test scripts in e2e-tests/ folder.",
-  "version": "1",
+  "description": "Scans the app's source code (Compose, SwiftUI, XML layouts), identifies screens, interactive elements, and user flows, then generates reusable YAML test scripts in e2e-tests/ folder with cross-platform support.",
+  "version": "2",
   "when": {
     "type": "userTriggered"
   },
   "then": {
     "type": "askAgent",
-    "prompt": "Scan the mobile app source code in this workspace. Find all UI source files (Kotlin Compose, SwiftUI, XML layouts). For each screen: 1) Identify all interactive elements (TextField, Button, Checkbox, etc.) with their accessibility labels or contentDescription. 2) Identify user flows (what happens on tap, state changes, navigation). 3) Generate YAML test scripts in e2e-tests/ folder following the schema in the generate-from-codebase steering file. 4) Generate e2e-tests/coverage.yaml listing all elements found and which are covered. Output a summary of how many screens found, elements identified, and test scripts generated."
+    "prompt": "Scan the mobile app source code in this workspace. Find all UI source files — look for: Kotlin Compose (*.kt with @Composable), SwiftUI (*.swift with View protocol/body), XML layouts (res/layout/*.xml), UIKit storyboards/xibs. For each screen found: 1) Identify all interactive elements (TextField, Button, Checkbox, Toggle, etc.) with their accessibility labels — for Compose: contentDescription/testTag; for SwiftUI: accessibilityIdentifier/accessibilityLabel; for XML: android:contentDescription. 2) Identify user flows (what happens on tap, state changes, navigation). 3) Determine platform based on source language — Kotlin/XML → android; Swift → ios; if both exist → [android, ios]. 4) Generate YAML test scripts in e2e-tests/ folder following the schema in the generate-from-codebase steering file. Set the platform field correctly per script. 5) Generate e2e-tests/coverage.yaml listing all elements found and which are covered. 6) Generate e2e-tests/version.yaml with metadata. Output a summary of how many screens found, elements identified, platforms detected, and test scripts generated."
   }
 }
