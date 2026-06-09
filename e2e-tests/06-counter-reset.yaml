@@ -1,0 +1,45 @@
+# Test Case: Counter Reset
+# Verifies counter resets to 0 when Reset button is tapped
+
+name: "Counter Reset"
+description: "Verify Reset button sets counter back to 0"
+platform: ["android"]
+priority: high
+preconditions:
+  - "App is launched and on main screen"
+  - "Counter is at 0"
+
+steps:
+  - action: tap
+    element: "+1"
+    accessibility_label: "Increment Button"
+    description: "Increment counter to 1"
+
+  - action: tap
+    element: "+1"
+    accessibility_label: "Increment Button"
+    description: "Increment counter to 2"
+
+  - action: tap
+    element: "+1"
+    accessibility_label: "Increment Button"
+    description: "Increment counter to 3"
+
+  - action: assert_visible
+    element: "Counter: 3"
+    type: text
+    accessibility_label: "Counter Display"
+    description: "Verify counter is at 3"
+
+  - action: tap
+    element: "Reset"
+    accessibility_label: "Reset Button"
+    description: "Tap Reset button"
+
+  - action: assert_visible
+    element: "Counter: 0"
+    type: text
+    accessibility_label: "Counter Display"
+    description: "Verify counter resets to 0"
+
+expected_result: "Counter returns to 0 after tapping Reset, regardless of current value"

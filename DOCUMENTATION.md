@@ -2,12 +2,13 @@
 
 ## What is This?
 
-An automated cross-platform E2E testing tool that runs on **Android emulators/devices** and **iOS simulators/devices**. It can:
+An automated E2E testing tool that runs on your Android emulator or iOS simulator. It can:
 
-1. **Generate test scripts** from your codebase (Compose, SwiftUI, XML) or requirement docs
-2. **Execute tests** automatically on all detected platforms (tap, type, swipe, assert)
-3. **Screenshot every assertion** (pass and fail)
-4. **Generate an Excel report** (.xlsx) with coverage metrics, requirement traceability, and per-platform results
+1. **Generate test scripts** from your codebase or requirement docs
+2. **Execute tests** automatically (tap, type, swipe, assert)
+3. **Screenshot every step** (pass and fail)
+4. **Generate an Excel report** (.xlsx) with test steps, status, and results
+5. **Save run history** — every execution stored with timestamps
 
 ---
 
@@ -17,11 +18,11 @@ An automated cross-platform E2E testing tool that runs on **Android emulators/de
 
 Make sure you have:
 - [Kiro IDE](https://kiro.dev) installed
-- Android emulator **running** and/or iOS simulator **running**
+- Android emulator **running** (or iOS simulator on macOS)
 - Your app **installed** on the emulator/simulator
 - Python 3 + openpyxl: `pip3 install openpyxl`
 
-### 2. Configure MCP
+### 2. Configure ANDROID_HOME
 
 Open `.kiro/settings/mcp.json` and update the path to your Android SDK:
 
@@ -39,29 +40,27 @@ Open `.kiro/settings/mcp.json` and update the path to your Android SDK:
 }
 ```
 
-**Common ANDROID_HOME paths:**
+**Common paths:**
 | OS | Path |
 |----|------|
 | macOS | `~/Library/Android/sdk` |
 | Linux | `~/Android/Sdk` |
 | Windows | `%LOCALAPPDATA%\Android\Sdk` |
 
-> **Note:** For iOS-only testing, `ANDROID_HOME` is not required. mobile-mcp detects iOS simulators via Xcode tools automatically.
-
 ### 3. Run
 
-Open **Agent Hooks** panel in Kiro sidebar. You'll see 4 hooks — use them in order:
+Open **Agent Hooks** panel in Kiro sidebar. You'll see 4 hooks:
 
 ---
 
-## Available Hooks (Actions)
+## Available Hooks
 
 | # | Hook | What it does |
 |---|------|-------------|
-| 1 | **Generate Tests from Codebase** ▶️ | Scans source code (Compose/SwiftUI/XML) → generates YAML test scripts with correct platform |
-| 2 | **Generate Tests from Requirements** ▶️ | Reads requirement docs (.md, .pdf, .docx) → generates YAML test scripts |
-| 3 | **Execute Test Scripts** ▶️ | Runs YAML scripts on all matching devices → screenshots → .xlsx report |
-| 4 | **Run Mobile E2E Tests** ▶️ | Quick mode — infers tests from UI directly, no YAML needed |
+| 1 | **Generate Tests from Codebase** ▶️ | Scans source code → generates YAML test scripts |
+| 2 | **Generate Tests from Requirements** ▶️ | Reads docs (.md, .pdf, .docx) → generates YAML test scripts |
+| 3 | **Execute Test Scripts** ▶️ | Runs YAML scripts on device → screenshots → Excel report |
+| 4 | **Run Mobile E2E Tests** ▶️ | Quick mode — infers tests from UI directly, no YAML |
 
 ---
 
@@ -72,19 +71,18 @@ STEP 1: Generate test scripts (pick one)
 ┌─────────────────────────────────────────────────────────┐
 │                                                           │
 │  ▶️ "Generate Tests from Codebase"                        │
-│  → Agent scans your source code                           │
-│  → Kotlin/Compose → platform: ["android"]                 │
-│  → Swift/SwiftUI  → platform: ["ios"]                     │
-│  → Both languages → platform: ["android", "ios"]          │
-│  → Finds screens, buttons, text fields, flows             │
-│  → Outputs: e2e-tests/*.yaml + coverage.yaml              │
+│  → Reads prompt/*.md for context (if exists)              │
+│  → Scans source code (Compose/SwiftUI/XML)               │
+│  → Outputs: e2e-tests/*.yaml + coverage.yaml             │
+│  → Increments version.yaml                               │
 │                                                           │
 │  OR                                                       │
 │                                                           │
 │  ▶️ "Generate Tests from Requirements"                    │
-│  → Agent reads docs/ folder (.md, .pdf, .docx)           │
-│  → Extracts testable acceptance criteria                  │
+│  → Reads prompt/*.md for context (if exists)              │
+│  → Reads docs/ folder (.md, .pdf, .docx, .txt)           │
 │  → Outputs: e2e-tests/*.yaml + traceability.yaml         │
+│  → Increments version.yaml                               │
 │                                                           │
 └─────────────────────────────────────────────────────────┘
 
@@ -92,18 +90,117 @@ STEP 2: Execute tests
 ┌─────────────────────────────────────────────────────────┐
 │                                                           │
 │  ▶️ "Execute Test Scripts"                                │
-│  → Detects all online devices (Android + iOS)             │
-│  → Matches each script's platform field to device         │
-│  → Adapts input method per platform automatically         │
-│  → Executes each step (tap, type, assert)                 │
+│  → Reads prompt/*.md for context (credentials, etc.)      │
+│  → Reads e2e-tests/*.yaml                                │
+│  → Launches app on device                                │
+│  → Executes each step (tap, type, assert)                │
 │  → Screenshots every assertion                            │
-│  → Generates e2e-runs/run-{date}_(time)/ with:           │
-│     • e2e-test-report.xlsx (per-platform results)         │
-│     • metadata.yaml                                       │
-│     • screenshots/ folder                                 │
+│  → Saves everything to e2e-runs/run-{DD-MM-YY}_(HH-MM)/ │
+│  → Generates e2e-test-report.xlsx                        │
 │                                                           │
 └─────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Prompt Context (prompt/ folder)
+
+Create a `prompt/` folder in project root to give the agent extra context:
+
+```
+prompt/
+├── credentials.md     ← Login test data
+├── flow-order.md      ← Which flows to test first
+├── workarounds.md     ← Known popups to dismiss, special handling
+└── business-logic.md  ← Domain rules the agent should know
+```
+
+**Example `prompt/credentials.md`:**
+```markdown
+# Test Credentials
+- Email: testuser@company.com
+- Password: Test123!
+- Pin: 1234
+```
+
+**Example `prompt/flow-order.md`:**
+```markdown
+# Test Flow Order
+1. Login first (required for all other tests)
+2. Home screen tests
+3. Profile tests
+4. Logout test (last)
+```
+
+This folder is **optional**. Without it, agent infers everything from code/docs alone.
+
+---
+
+## Output Structure
+
+After a test run:
+
+```
+your-project/
+├── e2e-tests/                              ← Test scripts (reusable)
+│   ├── 01-login-flow.yaml
+│   ├── 02-home-screen.yaml
+│   ├── coverage.yaml
+│   ├── traceability.yaml
+│   └── version.yaml                        ← TC version (auto-incremented)
+└── e2e-runs/                               ← Run history
+    ├── run-08-06-26_(14-30)/
+    │   ├── metadata.yaml                   ← Device, date, pass/fail counts
+    │   ├── e2e-test-report.xlsx            ← Excel report
+    │   └── screenshots/                    ← All screenshots for this run
+    │       ├── e2e-android-01-login-pass.png
+    │       └── e2e-android-02-home-FAIL.png
+    └── run-09-06-26_(09-15)/
+        ├── metadata.yaml
+        ├── e2e-test-report.xlsx
+        └── screenshots/
+```
+
+---
+
+## Excel Report Format
+
+Columns:
+
+| User Flow | Test No. | Test Scenario | Test Steps | Expected Results | Status | Actual Results | Screenshot |
+|-----------|----------|---------------|------------|-----------------|--------|---------------|------------|
+| Home | T001 | Greeting flow | 1. Tap name field... | "Hello, Kiro!" | Passed | "Hello, Kiro!" | e2e-android-01-pass.png |
+| Home | T002 | Empty name | 1. Tap Say Hello... | Error shown | Failed | Shows "Hello, !" | e2e-android-02-FAIL.png |
+
+**Rules:**
+- Passed → Actual Results = same as Expected
+- Failed → Actual Results = what actually happened
+- Skip → Actual Results = reason for skipping
+- Color coded: green (pass), red (fail), yellow (skip)
+
+**Writing behavior:**
+- Excel file created at the START of the run (with headers)
+- Each test case result written IMMEDIATELY after completion (per test case, not per module)
+- If interrupted mid-run, all completed test cases are already saved
+- Progress reported to user per module (not per test case)
+- **Batch limit: 10 test cases per session** — prevents hitting platform tool call limit
+- **Auto-resume:** Click ▶️ again → agent reads existing Excel, finds last test case, continues from there
+- Multiple sessions write to the SAME Excel file until all test cases complete
+
+---
+
+## Version Tracking
+
+Every time you generate test scripts, `version.yaml` increments:
+
+```yaml
+# e2e-tests/version.yaml
+version: "2"
+generated_date: "2026-06-09"
+generated_from: "codebase"
+```
+
+Each run's `metadata.yaml` records which TC version was used — so you know which scripts produced which results.
 
 ---
 
@@ -112,161 +209,23 @@ STEP 2: Execute tests
 If you just want a fast test without generating scripts first:
 
 1. Click ▶️ **"Run Mobile E2E Tests"**
-2. Agent infers tests directly from the UI on all online devices
-3. Screenshots + basic .docx report generated
+2. Agent infers tests directly from the UI
+3. Screenshots + basic report generated
 
 Use this for quick checks. Use the full workflow for formal testing with traceability.
 
 ---
 
-## Cross-Platform Behavior
-
-The agent **auto-detects** which devices are online and adapts behavior per platform:
-
-| Aspect | Android | iOS |
-|--------|---------|-----|
-| **Text Input** | ADB (`adb shell input text`) | `mobile_type_keys` (native) |
-| **Clear Field** | `KEYCODE_CTRL_A` + `KEYCODE_DEL` | Triple-tap select all + retype |
-| **Dismiss Keyboard** | `BACK` button | Tap outside field or press Done |
-| **Back Navigation** | Hardware `BACK` button | Swipe right from left edge |
-| **Permission Alerts** | `adb shell pm grant` or tap Allow | Tap Allow/Don't Allow |
-| **Stylus Overlay Fix** | `adb shell settings put secure stylus_handwriting_enabled 0` | N/A |
-
-### Multi-Device Scenarios
-
-| Devices Online | What Happens |
-|----------------|-------------|
-| Android only | Tests run on Android, report shows Android results |
-| iOS only | Tests run on iOS, report shows iOS results |
-| Both Android + iOS | Tests run on **both** devices, report grouped by platform |
-| Script has `platform: ["android"]` only | Skipped on iOS device |
-| Script has `platform: ["ios"]` only | Skipped on Android device |
-| Script has `platform: ["android", "ios"]` | Runs on both |
-
----
-
-## Output Files
-
-After a full run (with baseline integration):
-
-```
-your-project/
-├── e2e-tests/                              ← Generated test scripts (reusable)
-│   ├── 01-app-launch.yaml
-│   ├── 02-greeting-flow.yaml
-│   ├── 03-counter-increment.yaml
-│   ├── coverage.yaml                       ← Element coverage metrics
-│   ├── traceability.yaml                   ← Requirement → test mapping
-│   └── version.yaml                        ← TC version metadata
-└── e2e-runs/                               ← History of all runs
-    └── run-09-06-26_(12-17)/
-        ├── e2e-test-report.xlsx            ← Excel report
-        ├── metadata.yaml                   ← Run metadata
-        └── screenshots/                    ← All screenshots for this run
-            ├── e2e-android-01-app-launch-pass.png
-            ├── e2e-ios-01-app-launch-pass.png
-            └── ...
-```
-
----
-
-## Report Contents (.xlsx)
-
-The Excel report includes:
-
-1. **Metadata Header** — app name, device(s), date, TC version, pass/fail summary
-2. **Results Table** — User Flow, Test No., Test Scenario, Test Steps, Expected Results, Status (color-coded), Actual Results, Screenshot filename
-3. **Color Coding** — Green for Passed, Red for Failed, Yellow for Skipped
-4. **Multi-Platform** — If both platforms tested, results are grouped or include a Platform column
-
----
-
 ## Supported Platforms
 
-| Platform | Device Type | Text Input Method | Back Navigation |
-|----------|-------------|-------------------|-----------------|
-| Android | Emulator | ADB (`adb shell input text`) | `BACK` button |
-| Android | Physical device | ADB (`adb shell input text`) | `BACK` button |
-| iOS | Simulator | `mobile_type_keys` (native) | Swipe right from left edge |
-| iOS | Physical device | `mobile_type_keys` (native) | Swipe right from left edge |
+| Platform | Device Type | Text Input Method |
+|----------|-------------|-------------------|
+| Android | Emulator | ADB (`adb shell input text`) |
+| Android | Physical device | ADB (`adb shell input text`) |
+| iOS | Simulator | `mobile_type_keys` (native) |
+| iOS | Physical device | `mobile_type_keys` (native) |
 
----
-
-## iOS Setup Guide
-
-### Starting an iOS Simulator
-
-```bash
-# Option 1: From terminal
-open -a Simulator
-
-# Option 2: Boot specific device
-xcrun simctl boot "iPhone 15 Pro"
-
-# Option 3: From Xcode
-# Xcode → Window → Devices and Simulators → Simulators tab
-```
-
-### Installing App on Simulator
-
-```bash
-# Install .app directory or .zip
-xcrun simctl install booted /path/to/YourApp.app
-
-# For real devices, use .ipa file via mobile_install_app
-```
-
-### Pre-granting Permissions (Optional)
-
-```bash
-xcrun simctl privacy booted grant all com.your.bundleid
-```
-
-### Verifying iOS Device is Detected
-
-After booting the simulator, the agent will detect it via `mobile_list_available_devices` showing:
-```json
-{"id": "SIMULATOR_ID", "name": "iPhone 15 Pro", "platform": "ios", "state": "online"}
-```
-
----
-
-## Android Setup Guide
-
-### Starting an Emulator
-
-1. Open Android Studio → Tools → AVD Manager
-2. Click play on your virtual device
-3. Wait for home screen to appear
-
-### Verifying Android Device is Detected
-
-```bash
-adb devices
-# Should show: emulator-5554   device
-```
-
-### Fixing Common Android Input Issues
-
-```bash
-# Disable stylus overlay (do once per emulator session)
-adb -s emulator-5554 shell settings put secure stylus_handwriting_enabled 0
-```
-
----
-
-## Requirement Document Formats
-
-For "Generate Tests from Requirements", the agent reads:
-
-| Format | Location | Example |
-|--------|----------|---------|
-| Markdown | `docs/*.md` | User stories, acceptance criteria |
-| PDF | `docs/*.pdf` | Functional spec documents |
-| DOCX | `docs/*.docx` | Word requirement docs |
-| Text | `docs/*.txt` | Plain text specs |
-
-Put your requirement docs in `docs/` or `requirements/` folder.
+Agent adapts automatically based on which device it detects.
 
 ---
 
@@ -276,83 +235,49 @@ When you clone this repo, everything is ready:
 
 | What | Location | You Get |
 |------|----------|---------|
-| **MCP Config** | `.kiro/settings/mcp.json` | mobile-mcp auto-connects to Android/iOS devices |
-| **Hooks (4x)** | `.kiro/hooks/` | All 4 action triggers (cross-platform) |
+| **MCP Config** | `.kiro/settings/mcp.json` | mobile-mcp auto-connects to device |
+| **Hooks (4x)** | `.kiro/hooks/` | All 4 action triggers |
 | **Power** | `powers/mobile-e2e-tester/` | Agent knowledge (SOP for testing) |
-| **Steering** | Power steering files | Platform-specific guides (Android, iOS, report format) |
 
-**Setup:** Update `ANDROID_HOME` path (if using Android) → start emulator/simulator → click ▶️.
+**Setup:** Just update `ANDROID_HOME` path → start emulator → click ▶️.
 
 ---
 
 ## Sharing / Reuse on Other Projects
 
-To use this on any other mobile project:
+To use on any other mobile project:
 
 1. Copy `.kiro/` and `powers/` folders into the project
-2. Update `ANDROID_HOME` in `.kiro/settings/mcp.json` (Android projects)
-3. Start emulator/simulator with the app installed
-4. Open project in Kiro
-5. Click hooks — agent scans **that project's** codebase/docs
+2. Update `ANDROID_HOME` in `.kiro/settings/mcp.json`
+3. (Optional) Create `prompt/` folder with test context
+4. (Optional) Put requirement docs in `docs/`
+5. Start emulator with app installed
+6. Open project in Kiro → click hooks
 
-Works with:
-- **Android** — Kotlin/Compose, Java, XML layouts
-- **iOS** — SwiftUI, UIKit (Storyboard/XIB)
-- **Cross-platform** — KMP, Flutter, React Native (generates tests for both platforms)
+Everything is generic — no hardcoded references to any specific app.
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
-
-| Problem | Platform | Fix |
-|---------|----------|-----|
-| "No devices found" | Both | Start your emulator/simulator first |
-| Text not typing | Android | Run: `adb shell settings put secure stylus_handwriting_enabled 0` |
-| Text not typing | iOS | Toggle software keyboard: Simulator → I/O → Keyboard → Toggle Software Keyboard (⌘+K) |
-| App won't launch | Android | Verify package name: `adb shell pm list packages \| grep yourapp` |
-| App won't launch | iOS | Verify bundle ID: `xcrun simctl listapps booted` |
-| Permission alert blocking | iOS | Pre-grant: `xcrun simctl privacy booted grant all {bundle_id}` |
-| Keyboard covering elements | Android | Agent auto-dismisses with BACK button before next tap |
-| Keyboard covering elements | iOS | Agent taps outside field to dismiss |
-| mobile-mcp not working | Both | Check `.kiro/settings/mcp.json`, restart Kiro |
-| "openpyxl not found" | Both | Run: `pip3 install openpyxl` |
-| No YAML files found | Both | Run "Generate Tests from Codebase" first |
-| Dark mode affecting screenshots | iOS | Run: `xcrun simctl ui booted appearance light` |
-
----
-
-## Baseline Integration (Run History)
-
-Every test execution is saved as a timestamped run:
-
-```
-e2e-runs/
-├── run-08-06-26_(14-30)/     ← First run
-│   ├── metadata.yaml
-│   ├── e2e-test-report.xlsx
-│   └── screenshots/
-├── run-09-06-26_(12-17)/     ← Second run
-│   ├── metadata.yaml
-│   ├── e2e-test-report.xlsx
-│   └── screenshots/
-└── ...
-```
-
-Run folder format: `run-{DD-MM-YY}_(HH-MM)` — unique and sortable by date.
-
-You can ask the agent to **compare runs**: "Compare run-08-06-26_(14-30) vs run-09-06-26_(12-17)" to see regressions and fixes.
+| Problem | Fix |
+|---------|-----|
+| "No devices found" | Start your emulator/simulator first |
+| Text not typing (Android) | Agent auto-runs: `adb shell settings put secure stylus_handwriting_enabled 0` |
+| App won't launch | Verify package name — run `adb shell pm list packages` |
+| mobile-mcp not working | Check `.kiro/settings/mcp.json`, restart Kiro |
+| "openpyxl not found" | Agent auto-installs, or run: `pip3 install openpyxl` |
+| No YAML files for execute | Run "Generate Tests from Codebase" first |
 
 ---
 
 ## Limitations
 
 - Runs on **local devices only** (no cloud device farms yet)
-- Tests run **sequentially** per device (one device at a time)
+- Tests run **sequentially** (one device at a time)
 - Report saved **locally** (manual upload needed)
-- Emulator/simulator must be **already running** before you start
-- iOS real devices require `.ipa` file (not `.app` directory)
+- Emulator must be **already running** before you start
+- **~30 test cases per run** — platform limit of 1000 tool calls per session. Agent auto-batches (10 per session) and resumes on next click.
 
 ---
 
@@ -362,4 +287,4 @@ You can ask the agent to **compare runs**: "Compare run-08-06-26_(14-30) vs run-
 |-----------|------|------|
 | mobile-mcp | Controls Android/iOS devices via MCP | [github.com/mobile-next/mobile-mcp](https://github.com/mobile-next/mobile-mcp) |
 | Kiro IDE | AI agent that orchestrates everything | [kiro.dev](https://kiro.dev) |
-| openpyxl | Generates .xlsx Excel reports | [pypi.org/project/openpyxl](https://pypi.org/project/openpyxl/) |
+| openpyxl | Generates Excel reports | [pypi.org/project/openpyxl](https://pypi.org/project/openpyxl/) |

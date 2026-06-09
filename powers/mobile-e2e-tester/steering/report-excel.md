@@ -150,9 +150,13 @@ pip3 install openpyxl
 
 ## How Agent Uses This
 
-During "Execute Test Scripts" or "Run Mobile E2E Tests":
+During "Execute Test Scripts":
 
-1. After all tests complete, collect results in this format:
+1. Create Excel file with headers at the start
+2. After **each test case** completes → immediately append result row to Excel (open, write, save)
+3. If a test is blocked/skipped → mark as Skip, write to Excel, move to next independent module
+4. Report progress to user **per module** (not per test case)
+5. After all done → finalize with metadata header and color coding
 ```python
 test_results = [
     {

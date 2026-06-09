@@ -1,0 +1,58 @@
+# Test Case: Greeting Update
+# Verifies greeting updates when a new name is entered and button tapped again
+
+name: "Greeting Update"
+description: "Verify greeting updates when name changes and button is tapped again"
+platform: ["android"]
+priority: medium
+preconditions:
+  - "App is launched and on main screen"
+  - "Name input field is empty"
+
+steps:
+  - action: tap
+    element: "Name Input"
+    accessibility_label: "Name Input"
+    description: "Tap on name input field"
+
+  - action: type
+    text: "Alice"
+    description: "Type first name"
+
+  - action: tap
+    element: "Say Hello"
+    accessibility_label: "Greet Button"
+    description: "Tap Say Hello button"
+
+  - action: assert_visible
+    element: "Hello, Alice!"
+    type: text
+    accessibility_label: "Greeting Result"
+    description: "Verify first greeting shows"
+
+  - action: tap
+    element: "Name Input"
+    accessibility_label: "Name Input"
+    description: "Tap name input field again"
+
+  - action: clear
+    element: "Name Input"
+    accessibility_label: "Name Input"
+    description: "Clear existing text"
+
+  - action: type
+    text: "Bob"
+    description: "Type a different name"
+
+  - action: tap
+    element: "Say Hello"
+    accessibility_label: "Greet Button"
+    description: "Tap Say Hello button again"
+
+  - action: assert_visible
+    element: "Hello, Bob!"
+    type: text
+    accessibility_label: "Greeting Result"
+    description: "Verify greeting updates to new name"
+
+expected_result: "Greeting updates to reflect the new name entered"

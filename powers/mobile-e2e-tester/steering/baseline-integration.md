@@ -90,12 +90,14 @@ This makes each run unique and sortable by date.
 ## Agent Behavior
 
 ### When executing tests:
-1. Run all tests (same as before)
-2. Create run folder: `e2e-runs/run-{DD-MM-YY}_(HH-MM)/`
-3. Copy screenshots to `e2e-runs/run-{DD-MM-YY}_(HH-MM)/screenshots/`
-4. Generate `e2e-runs/run-{DD-MM-YY}_(HH-MM)/e2e-test-report.xlsx`
-5. Generate `e2e-runs/run-{DD-MM-YY}_(HH-MM)/metadata.yaml`
-6. Report: "Run completed at {date}. {passed}/{total} passed. Report: e2e-runs/run-{DD-MM-YY}_(HH-MM)/e2e-test-report.xlsx"
+1. Check `e2e-runs/` for latest run folder with existing Excel
+2. If Excel exists → read all Test No. values → **skip any test already recorded** (never re-run)
+3. If no existing run → create new `e2e-runs/run-{DD-MM-YY}_(HH-MM)/`
+4. Execute max 10 test cases per session (batch limit) — only unrecorded ones
+5. Write each result to Excel immediately after completion
+6. After 10 new test cases or all done → stop, report progress
+7. User clicks ▶️ again → agent reads Excel, skips recorded tests, continues with remaining
+8. Repeat until all test cases complete
 
 ### Comparing runs:
 If user asks "compare run 1 vs run 2":

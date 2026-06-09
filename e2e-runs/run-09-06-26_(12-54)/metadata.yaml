@@ -1,0 +1,29 @@
+run_id: "run-09-06-26_(12-54)"
+date: "2026-06-09 12:54"
+devices:
+  - name: "Pixel 7"
+    id: "emulator-5554"
+    platform: "android"
+    type: "emulator"
+    version: "17"
+tc_version: "1"
+total_tests: 6
+results:
+  android:
+    passed: 6
+    failed: 0
+    skipped: 0
+overall:
+  passed: 6
+  failed: 0
+  skipped: 0
+  pass_rate: "100%"
+report_file: "e2e-test-report.xlsx"
+screenshots_dir: "screenshots/"
+test_scripts:
+  - "01-app-launch.yaml"
+  - "02-greeting-flow.yaml"
+  - "03-counter-increment.yaml"
+  - "04-counter-decrement.yaml"
+  - "05-counter-reset.yaml"
+  - "06-empty-greeting.yaml"

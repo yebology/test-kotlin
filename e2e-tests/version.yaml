@@ -1,0 +1,18 @@
+# Test Case Version Metadata
+version: "2"
+generated_date: "2026-06-09"
+generated_by: "Kiro Agent"
+generated_from: "codebase"
+source: "app/src/main/java/com/example/tesaxrail/"
+app_package: "com.example.tesaxrail"
+app_name: "TesAxrail"
+platform: ["android"]
+total_test_cases: 7
+test_scripts:
+  - "01-app-launch.yaml"
+  - "02-greeting-flow.yaml"
+  - "03-greeting-empty-name.yaml"
+  - "04-counter-increment.yaml"
+  - "05-counter-decrement.yaml"
+  - "06-counter-reset.yaml"
+  - "07-greeting-update.yaml"

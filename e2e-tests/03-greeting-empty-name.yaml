@@ -1,0 +1,24 @@
+# Test Case: Greeting with Empty Name
+# Verifies behavior when greeting is triggered with no name entered
+
+name: "Greeting Empty Name"
+description: "Verify greeting behavior when no name is entered"
+platform: ["android"]
+priority: medium
+preconditions:
+  - "App is launched and on main screen"
+  - "Name input field is empty"
+
+steps:
+  - action: tap
+    element: "Say Hello"
+    accessibility_label: "Greet Button"
+    description: "Tap Say Hello without entering a name"
+
+  - action: assert_visible
+    element: "Hello, !"
+    type: text
+    accessibility_label: "Greeting Result"
+    description: "Verify greeting message appears with empty name"
+
+expected_result: "Greeting text 'Hello, !' is displayed (empty name greeting)"

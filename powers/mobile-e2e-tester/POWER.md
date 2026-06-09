@@ -100,10 +100,12 @@ Generate test scripts from the codebase
 ```
 
 **Steps:**
-1. Agent reads source files (Compose/SwiftUI/XML)
-2. Identifies screens, interactive elements, and state changes
-3. Generates YAML test scripts in `e2e-tests/` directory
-4. Outputs coverage.yaml showing element coverage
+1. Agent reads `prompt/*.md` for additional context (flow order, credentials, business logic)
+2. Agent reads source files (Compose/SwiftUI/XML)
+3. Identifies screens, interactive elements, and state changes
+4. Generates YAML test scripts in `e2e-tests/` directory (ordered by flow from prompt context)
+5. Outputs coverage.yaml showing element coverage
+6. Increments version in version.yaml
 
 ### Workflow 5: Generate Test Scripts from Requirements (POB-203)
 
@@ -115,14 +117,16 @@ Generate test scripts from docs/requirements.md
 ```
 
 **Steps:**
-1. Agent reads requirement document (MD, pasted text, or user stories)
-2. Extracts testable acceptance criteria
-3. Generates YAML test scripts with `requirement_id` field
-4. Outputs traceability.yaml mapping requirements → test scripts
+1. Agent reads `prompt/*.md` for additional context (flow order, test data, special instructions)
+2. Agent reads requirement documents (MD, PDF, DOCX, TXT in docs/ or requirements/)
+3. Extracts testable acceptance criteria
+4. Generates YAML test scripts with `requirement_id` field (ordered by flow from prompt context)
+5. Outputs traceability.yaml mapping requirements → test scripts
+6. Increments version in version.yaml
 
 ### Workflow 6: Report with Coverage & Traceability (POB-205)
 
-**Goal:** Generate enhanced report with coverage metrics and requirement traceability.
+**Goal:** Generate enhanced Excel report with coverage metrics and requirement traceability.
 
 **Trigger:**
 ```
@@ -130,15 +134,13 @@ Run E2E tests with coverage report
 ```
 
 **Steps:**
-1. Execute tests (screenshots at every step)
-2. Read coverage.yaml and traceability.yaml
-3. Generate .docx report with:
-   - Executive summary (pass/fail/coverage %)
-   - Results table with requirement IDs
-   - Requirement traceability matrix
-   - Coverage metrics (elements, requirements, platforms)
-   - Coverage gaps highlighted
-   - Failure details with suggested fixes
+1. Agent reads `prompt/*.md` for context (credentials, workarounds, special handling)
+2. Execute tests (screenshots at every step, saved to e2e-runs/)
+3. Generate .xlsx report with:
+   - Results table (User Flow, Test No., Scenario, Steps, Expected, Status, Actual, Screenshot)
+   - Pass = Actual same as Expected; Fail = what actually happened
+   - Color coding (green/red/yellow)
+4. Save to `e2e-runs/run-{DD-MM-YY}_(HH-MM)/`
 
 ## Test Execution Protocol
 
@@ -174,16 +176,37 @@ All screenshots saved to: `{project_root}/e2e-screenshots/`
   ```bash
   {adb_path} -s {device_id} shell input text "{text}"
   ```
+  **IMPORTANT — Escape special characters to avoid shell hang:**
+  ```bash
+  # Characters that MUST be escaped with backslash: ! @ # $ % ^ & * ( ) < > | ; ' " ` ~ space
+  
+  # Examples:
+  adb shell input text "TestPass1234\!"        # ! escaped
+  adb shell input text "user\@company.com"     # @ escaped  
+  adb shell input text "hello\ world"          # space escaped
+  adb shell input text "price\$100"            # $ escaped
+  adb shell input text "test\#tag"             # # escaped
+  
+  # Multiple special chars:
+  adb shell input text "P\@ss\!word\#1"        # P@ss!word#1
+  ```
+  **If text has many special chars, type character by character as fallback:**
+  ```bash
+  adb shell input text "TestPass1234"
+  adb shell input keyevent 74  # keycode for specific char
+  ```
+  **Or use mobile_type_keys instead** — it doesn't have shell escaping issues (but may not work on all Android devices).
 - **Keyboard dismiss:** `mobile_press_button` with button="BACK"
 - **Stylus overlay fix:** If handwriting overlay appears:
   ```bash
   {adb_path} -s {device_id} shell settings put secure stylus_handwriting_enabled 0
   ```
-- **Clear text field:** Use ADB keyevents:
+- **Clear text field:** Select all + delete (fast):
   ```bash
-  {adb_path} -s {device_id} shell input keyevent KEYCODE_MOVE_END
-  {adb_path} -s {device_id} shell input keyevent --longpress KEYCODE_DEL KEYCODE_DEL ...
+  {adb_path} -s {device_id} shell input keyevent KEYCODE_CTRL_A
+  {adb_path} -s {device_id} shell input keyevent KEYCODE_DEL
   ```
+  Never use `--longpress KEYCODE_DEL` repeated — it's extremely slow.
 - **ADB path (macOS):** `~/Library/Android/sdk/platform-tools/adb`
 
 ### iOS
@@ -264,14 +287,48 @@ The report is generated via a Python script that:
 ## Best Practices
 
 - Always start tests from a fresh app state (terminate + relaunch)
-- Use `list_elements_on_screen` for assertions, not screenshots (screenshots are for documentation)
-- Take screenshots AFTER assertions, not before
+- Use `list_elements_on_screen` for assertions — call it ONLY ONCE per assertion, never repeat
+- Take ONE screenshot per test case (after final assertion) — not after every step
+- If an action fails after 1 retry, mark as Failed and move on — never loop
 - Name tests descriptively — a failing test name should explain what broke
 - Run the same tests on both platforms when possible for comparison
 - Keep test flows short and focused — one feature per test
 - Always capture failure screenshots immediately (before any cleanup)
 - Generate reports even for passing runs — they serve as documentation
+- These efficiency rules prevent hitting the 1000 tool call limit per session
 
 ## Configuration
 
 **No additional configuration required** — works with any app that's installed on an available Android emulator/device or iOS simulator/device. Just ensure mobile-mcp is configured in your Kiro MCP settings.
+
+## Prompt Context (prompt/ folder)
+
+Create a `prompt/` folder in your project root to give the agent additional context for generating and executing tests. The agent reads ALL `.md` files in this folder before running.
+
+**Common use cases:**
+```
+prompt/
+├── credentials.md     ← Login credentials, API keys for testing
+├── flow-order.md      ← Which flows to test first, dependencies between tests
+├── workarounds.md     ← Known issues, popups to dismiss, special handling
+└── business-logic.md  ← Domain-specific rules the agent should know
+```
+
+**Example `prompt/credentials.md`:**
+```markdown
+# Test Credentials
+- Email: testuser@company.com
+- Password: Test123!
+- Pin: 1234
+```
+
+**Example `prompt/flow-order.md`:**
+```markdown
+# Test Flow Order
+1. Login first (required for all other tests)
+2. Home screen tests
+3. Profile tests
+4. Logout test (last)
+```
+
+This folder is optional. Without it, the agent infers everything from code/docs alone.

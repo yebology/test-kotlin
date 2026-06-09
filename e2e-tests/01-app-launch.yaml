@@ -1,0 +1,58 @@
+# Test Case: App Launch
+# Verifies the app starts successfully and displays the main screen elements
+
+name: "App Launch"
+description: "Verify TesAxrail app launches and shows all main screen elements"
+platform: ["android"]
+priority: high
+preconditions:
+  - "App is installed on device"
+  - "Device is unlocked and on home screen"
+
+steps:
+  - action: launch_app
+    package: "com.example.tesaxrail"
+    description: "Launch TesAxrail app"
+
+  - action: assert_visible
+    element: "Axrail Test App"
+    type: text
+    description: "Verify app title is displayed"
+
+  - action: assert_visible
+    element: "Name Input"
+    type: text_field
+    accessibility_label: "Name Input"
+    description: "Verify name input field is present"
+
+  - action: assert_visible
+    element: "Say Hello"
+    type: button
+    accessibility_label: "Greet Button"
+    description: "Verify greet button is visible"
+
+  - action: assert_visible
+    element: "Counter: 0"
+    type: text
+    accessibility_label: "Counter Display"
+    description: "Verify counter starts at 0"
+
+  - action: assert_visible
+    element: "+1"
+    type: button
+    accessibility_label: "Increment Button"
+    description: "Verify increment button is visible"
+
+  - action: assert_visible
+    element: "-1"
+    type: button
+    accessibility_label: "Decrement Button"
+    description: "Verify decrement button is visible"
+
+  - action: assert_visible
+    element: "Reset"
+    type: button
+    accessibility_label: "Reset Button"
+    description: "Verify reset button is visible"
+
+expected_result: "All main screen elements are visible and properly laid out"

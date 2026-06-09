@@ -1,0 +1,41 @@
+# Test Case: Counter Decrement
+# Verifies counter decrements correctly when -1 button is tapped
+
+name: "Counter Decrement"
+description: "Verify tapping -1 button decrements the counter"
+platform: ["android"]
+priority: high
+preconditions:
+  - "App is launched and on main screen"
+  - "Counter is at 0"
+
+steps:
+  - action: assert_visible
+    element: "Counter: 0"
+    type: text
+    accessibility_label: "Counter Display"
+    description: "Verify counter starts at 0"
+
+  - action: tap
+    element: "-1"
+    accessibility_label: "Decrement Button"
+    description: "Tap decrement button once"
+
+  - action: assert_visible
+    element: "Counter: -1"
+    type: text
+    accessibility_label: "Counter Display"
+    description: "Verify counter shows -1"
+
+  - action: tap
+    element: "-1"
+    accessibility_label: "Decrement Button"
+    description: "Tap decrement button again"
+
+  - action: assert_visible
+    element: "Counter: -2"
+    type: text
+    accessibility_label: "Counter Display"
+    description: "Verify counter shows -2"
+
+expected_result: "Counter decrements by 1 on each tap of the -1 button, allowing negative values"

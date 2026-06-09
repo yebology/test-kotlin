@@ -36,9 +36,21 @@ adb -s {device_id} shell settings put secure stylus_handwriting_enabled 0
 mobile_click_on_screen_at_coordinates(device, x, y)
 ```
 
-**Step 3:** Type via ADB:
+**Step 3:** Type via ADB — **MUST escape special characters:**
 ```bash
-adb -s {device_id} shell input text "{text}"
+# Safe characters (no escape needed): a-z A-Z 0-9 . - _
+# Characters that MUST be escaped: ! @ # $ % ^ & * ( ) < > | ; ' " ` ~ space
+
+# Examples:
+adb -s {device_id} shell input text "Kiro"                    # simple, no escape needed
+adb -s {device_id} shell input text "TestPass1234\!"          # ! escaped
+adb -s {device_id} shell input text "user\@company.com"       # @ escaped
+adb -s {device_id} shell input text "hello\ world"            # space escaped
+adb -s {device_id} shell input text "P\@ss\!word\#1"          # multiple special chars
+
+# NEVER do this (will hang/stuck):
+# adb shell input text "TestPass1234!"     ← ! not escaped = shell hangs
+# adb shell input text "user@company.com"  ← @ not escaped = unpredictable
 ```
 
 **Step 4:** Dismiss keyboard:
@@ -46,17 +58,28 @@ adb -s {device_id} shell input text "{text}"
 mobile_press_button(device, "BACK")
 ```
 
+### Fallback: mobile_type_keys
+If ADB escaping is too complex for certain text, try `mobile_type_keys` — it doesn't have shell escaping issues but may not work on all devices/fields:
+```
+mobile_type_keys(device, "P@ss!word#1", submit=false)
+```
+
 ### Clearing Text Fields
 ```bash
-# Move cursor to end
-adb -s {device_id} shell input keyevent KEYCODE_MOVE_END
-
-# Select all
+# FAST method (select all + delete — under 1 second):
 adb -s {device_id} shell input keyevent KEYCODE_CTRL_A
-
-# Delete
 adb -s {device_id} shell input keyevent KEYCODE_DEL
+
+# NEVER use longpress with many KEYCODE_DEL — it's extremely slow (~30 sec for 60 chars)
+# BAD: adb shell input keyevent --longpress KEYCODE_DEL KEYCODE_DEL KEYCODE_DEL ...
 ```
+
+## Important ADB Rules
+
+- **NEVER append `2>&1`** to ANY shell command (ADB, pip, python, mkdir, etc.) — it causes the terminal to hang waiting for output
+- **NEVER use `--longpress` with multiple keyevents** — extremely slow
+- **ALWAYS escape special characters** in `input text` commands
+- Keep each ADB command as a separate single command (no chaining with &&)
 
 ## Navigation
 

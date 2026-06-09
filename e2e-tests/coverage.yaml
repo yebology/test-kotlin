@@ -1,0 +1,100 @@
+# Element Coverage Report
+# Generated from codebase scan of com.example.tesaxrail
+
+generated_date: "2026-06-09"
+source_files:
+  - "app/src/main/java/com/example/tesaxrail/MainActivity.kt"
+
+screens:
+  - name: "MainScreen"
+    file: "MainActivity.kt"
+    composable: true
+    total_elements: 7
+    covered_elements: 7
+    coverage_percent: 100
+
+elements:
+  - name: "Name Input"
+    type: "OutlinedTextField"
+    accessibility_label: "Name Input"
+    screen: "MainScreen"
+    covered: true
+    covered_by:
+      - "01-app-launch.yaml"
+      - "02-greeting-flow.yaml"
+      - "03-greeting-empty-name.yaml"
+      - "07-greeting-update.yaml"
+
+  - name: "Greet Button"
+    type: "Button"
+    accessibility_label: "Greet Button"
+    display_text: "Say Hello"
+    screen: "MainScreen"
+    covered: true
+    covered_by:
+      - "01-app-launch.yaml"
+      - "02-greeting-flow.yaml"
+      - "03-greeting-empty-name.yaml"
+      - "07-greeting-update.yaml"
+
+  - name: "Greeting Result"
+    type: "Text"
+    accessibility_label: "Greeting Result"
+    screen: "MainScreen"
+    conditional: true
+    condition: "Shown only after Greet Button is tapped"
+    covered: true
+    covered_by:
+      - "02-greeting-flow.yaml"
+      - "03-greeting-empty-name.yaml"
+      - "07-greeting-update.yaml"
+
+  - name: "Counter Display"
+    type: "Text"
+    accessibility_label: "Counter Display"
+    screen: "MainScreen"
+    covered: true
+    covered_by:
+      - "01-app-launch.yaml"
+      - "04-counter-increment.yaml"
+      - "05-counter-decrement.yaml"
+      - "06-counter-reset.yaml"
+
+  - name: "Increment Button"
+    type: "Button"
+    accessibility_label: "Increment Button"
+    display_text: "+1"
+    screen: "MainScreen"
+    covered: true
+    covered_by:
+      - "01-app-launch.yaml"
+      - "04-counter-increment.yaml"
+      - "06-counter-reset.yaml"
+
+  - name: "Decrement Button"
+    type: "Button"
+    accessibility_label: "Decrement Button"
+    display_text: "-1"
+    screen: "MainScreen"
+    covered: true
+    covered_by:
+      - "01-app-launch.yaml"
+      - "05-counter-decrement.yaml"
+
+  - name: "Reset Button"
+    type: "Button"
+    accessibility_label: "Reset Button"
+    display_text: "Reset"
+    screen: "MainScreen"
+    covered: true
+    covered_by:
+      - "01-app-launch.yaml"
+      - "06-counter-reset.yaml"
+
+summary:
+  total_screens: 1
+  total_elements: 7
+  covered_elements: 7
+  coverage_percent: 100
+  total_test_scripts: 7
+  platform: ["android"]
