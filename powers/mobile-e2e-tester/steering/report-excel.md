@@ -27,9 +27,10 @@ Generate test reports in `.xlsx` format (Excel) instead of `.docx`. The report i
 
 ### Color Coding
 
-- **Passed** → green background on Status cell
-- **Failed** → red/orange background on Status cell
-- **Skip** → yellow background on Status cell
+- **Passed** → green background on **entire row** (not just Status cell)
+- **Failed** → red/orange background on **entire row**
+- **Skip** → yellow background on **entire row**
+- **EVERY row must have a color** — no row should ever be left without color styling. This must be consistent across all batches/sessions.
 
 ## Python Script Template
 

@@ -284,6 +284,55 @@ The report is generated via a Python script that:
 - Wait for element to appear
 - Check if keyboard is covering the element
 
+### MaterialCardView buttons not clickable
+**Problem:** Buttons using MaterialCardView don't respond to accessibility tap
+**Solution:**
+- Get button coordinates from `list_elements_on_screen`
+- Use direct coordinate tap: `mobile_click_on_screen_at_coordinates`
+- If still not working, try `adb shell input tap X Y` with raw pixel coordinates
+- Ensure text field focus is removed first (tap elsewhere, or press BACK)
+
+## Test Account Strategy
+
+**IMPORTANT:** Do NOT skip tests just because they require account creation or specific account states. Use these strategies:
+
+### Dummy Accounts
+- Agent is ALLOWED to create new test accounts during testing
+- Use pattern: `e2e.test.{timestamp}@tempmail.com` for throwaway accounts
+- Document created accounts in prompt/credentials.md for cleanup later
+
+### Multiple Test Accounts
+Prepare accounts for different scenarios in `prompt/credentials.md`:
+```markdown
+# Regular user (has bookings, verified)
+- Email: kiro.test.e2e@gmail.com
+- Password: TestPass1234!
+
+# Fresh user (no bookings, no history)  
+- Email: kiro.fresh@gmail.com
+- Password: TestPass1234!
+
+# B2B user (has coins, company account)
+- Email: kiro.b2b@company.com
+- Password: TestPass1234!
+
+# Throwaway (for destructive tests like account lock/delete)
+- Email: kiro.throwaway@tempmail.com
+- Password: TestPass1234!
+```
+
+### OTP / Email Verification
+For flows that require OTP or email verification:
+- Use temp email services readable via API (Mailinator, Guerrilla Mail)
+- Or use a real email with app-specific password that agent can access
+- If truly no email access possible, mark as Skip with reason "Requires email API integration"
+- NEVER skip a test just because it creates a new account — that's allowed
+
+### Destructive Tests (Account Lock, Delete)
+- Use dedicated throwaway accounts
+- Mark these tests to run LAST in the flow order
+- Agent is allowed to lock/delete throwaway accounts
+
 ## Best Practices
 
 - Always start tests from a fresh app state (terminate + relaunch)
