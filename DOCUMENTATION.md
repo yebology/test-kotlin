@@ -188,7 +188,34 @@ your-project/
 
 ## Excel Report Format
 
-The Excel has **one sheet per module** + a Coverage Summary sheet:
+The Excel has this structure:
+
+### Sheet 1: Executive Summary (FIRST sheet)
+
+**Module Overview:**
+| Module | Total Tests | Passed | Failed | Skipped | Pass Rate |
+|--------|-------------|--------|--------|---------|-----------|
+| Home Landing | 13 | 11 | 1 | 1 | 84.6% |
+| Search | 8 | 7 | 1 | 0 | 87.5% |
+| Booking | 10 | 8 | 0 | 2 | 80% |
+
+**Bugs by Criticality:**
+| Severity | Count | Description |
+|----------|-------|-------------|
+| Critical | 0 | App crash, data loss |
+| High | 1 | Feature broken/unusable |
+| Medium | 2 | Works but incorrectly |
+| Low | 1 | Cosmetic/UI issue |
+
+**Overall Metrics:**
+- Total Modules: 5
+- Total Test Cases: 50
+- Overall Pass Rate: 86%
+- Coverage: 92%
+
+**Key Findings:**
+- Search returns empty for valid queries (High)
+- Profile save button unresponsive (Medium)
 
 ### Module Sheets (e.g., "Home Landing", "Search", "Booking")
 
@@ -196,7 +223,7 @@ Each module gets its own sheet with:
 
 | User Flow | Test No. | Test Scenario | Test Steps | Expected Results | Status | Actual Results | Screenshot |
 |-----------|----------|---------------|------------|-----------------|--------|---------------|------------|
-| Home | HL-HP-001 | Landing loads | 1. Open app... | Home screen shown | Passed | Home screen shown | HL-HP-001.png |
+| Home | HL-HP-001 | Landing loads | 1. Open app\n2. Verify home | Home screen shown | Passed | Home screen shown | HL-HP-001.png |
 | ... | ... | ... | ... | ... | ... | ... | ... |
 | **Summary** | | | | | | **5 Passed, 1 Failed, 0 Skipped (Total: 6)** | |
 

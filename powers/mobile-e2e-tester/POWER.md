@@ -229,11 +229,16 @@ All screenshots saved to: `{project_root}/e2e-screenshots/`
 ## Report Generation
 
 ### Format
-Reports are generated as `.xlsx` (Excel) files with **one sheet per module** + a Coverage Summary sheet:
-- **Sheet per module** (e.g., "Home Landing", "Search", "Booking") — test results for that module with summary row at bottom
-- **Coverage Summary sheet** — grand totals: executed, passed, failed, skipped, pass rate %, coverage %
+Reports are generated as `.xlsx` (Excel) files with this structure:
+- **Sheet 1: Executive Summary** (FIRST sheet) containing:
+  - Module Overview table: Module Name, Total Test Cases, Passed, Failed, Skipped, Pass Rate %
+  - Bugs by Criticality: Critical (crash/data loss), High (feature broken), Medium (works incorrectly), Low (cosmetic)
+  - Overall metrics: total modules, total tests, overall pass rate, coverage %
+  - Key Findings: top issues discovered
+- **Sheet per module** (e.g., "Home Landing", "Search", "Booking") — test results with summary row at bottom
+- **Coverage Summary sheet** (last) — grand totals
 
-Both module sheets and coverage sheet update after every single test case completion.
+All sheets update after every single test case completion.
 
 ### Report Structure
 ```
