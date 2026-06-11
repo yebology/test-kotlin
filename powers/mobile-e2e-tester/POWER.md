@@ -67,9 +67,19 @@ Before running tests, verify devices are available:
    - Perform actions (tap, type, swipe)
    - Assert expected state via element inspection
    - Take screenshot (labeled pass/fail)
-6. Generate `.docx` report with all results
+6. Generate Excel report per module
 
-### Workflow 2: Cross-Platform Test Run
+### Workflow 2: Generate from Excel (Ground Truth)
+
+**Goal:** Upload a manually-written Excel test plan and convert to executable YAML scripts.
+
+**Steps:**
+1. Place your Excel test plan (.xlsx) in `docs/` or project root
+2. Click ▶️ "Generate Tests from Excel"
+3. Agent parses Excel → creates YAML per module in `e2e-tests/`
+4. Click ▶️ "Execute Test Scripts" to run them
+
+### Workflow 3: Cross-Platform Test Run
 
 **Goal:** Run the same test suite on both Android and iOS.
 
@@ -219,11 +229,11 @@ All screenshots saved to: `{project_root}/e2e-screenshots/`
 ## Report Generation
 
 ### Format
-Reports are generated as `.xlsx` (Excel) files with 2 sheets:
-- **Sheet 1 "Test Results"** — per test case: User Flow, Test No., Scenario, Steps, Expected, Status, Actual, Screenshot + summary row at bottom
-- **Sheet 2 "Coverage Summary"** — totals: executed, passed, failed, skipped, pass rate %, coverage %
+Reports are generated as `.xlsx` (Excel) files with **one sheet per module** + a Coverage Summary sheet:
+- **Sheet per module** (e.g., "Home Landing", "Search", "Booking") — test results for that module with summary row at bottom
+- **Coverage Summary sheet** — grand totals: executed, passed, failed, skipped, pass rate %, coverage %
 
-Both sheets update after every single test case completion.
+Both module sheets and coverage sheet update after every single test case completion.
 
 ### Report Structure
 ```
@@ -294,44 +304,44 @@ The report is generated via a Python script that:
 
 ## Test Account Strategy
 
-**IMPORTANT:** Do NOT skip tests just because they require account creation or specific account states. Use these strategies:
+**THIS IS A DEV/TEST ENVIRONMENT. There is nothing to worry about.**
 
-### Dummy Accounts
-- Agent is ALLOWED to create new test accounts during testing
-- Use pattern: `e2e.test.{timestamp}@tempmail.com` for throwaway accounts
-- Document created accounts in prompt/credentials.md for cleanup later
+The agent is ALLOWED and ENCOURAGED to:
+- Create new accounts freely
+- Change passwords
+- Delete accounts
+- Create bookings/tickets
+- Modify any data
 
-### Multiple Test Accounts
-Prepare accounts for different scenarios in `prompt/credentials.md`:
-```markdown
-# Regular user (has bookings, verified)
-- Email: kiro.test.e2e@gmail.com
-- Password: TestPass1234!
+It's test data, not production. Never skip a test because of "side effects."
 
-# Fresh user (no bookings, no history)  
-- Email: kiro.fresh@gmail.com
-- Password: TestPass1234!
+### Untestable = Per STEP, Never Per FLOW
 
-# B2B user (has coins, company account)
-- Email: kiro.b2b@company.com
-- Password: TestPass1234!
+**NEVER classify an entire flow as untestable.** Break every flow into steps. Test ALL steps up to the point where automation truly cannot proceed. Only the SPECIFIC step that's impossible is the "untestable boundary."
 
-# Throwaway (for destructive tests like account lock/delete)
-- Email: kiro.throwaway@tempmail.com
-- Password: TestPass1234!
-```
+**Example — Sign Up:**
+- Steps 1-8 (form fill, validation, password policies, submit) → ALL TESTABLE
+- Step 9 (email OTP verification) → untestable boundary
+- ✅ Generate tests for steps 1-8
+- ❌ WRONG: "Sign Up is untestable because it creates accounts"
 
-### OTP / Email Verification
-For flows that require OTP or email verification:
-- Use temp email services readable via API (Mailinator, Guerrilla Mail)
-- Or use a real email with app-specific password that agent can access
-- If truly no email access possible, mark as Skip with reason "Requires email API integration"
-- NEVER skip a test just because it creates a new account — that's allowed
+**Example — Change Password:**
+- Steps 1-3 (navigate, fill current password, fill new password, confirm) → ALL TESTABLE
+- Step 4 (if OTP required) → untestable boundary
+- ✅ Generate tests for form validation, password policies, mismatch errors
 
-### Destructive Tests (Account Lock, Delete)
-- Use dedicated throwaway accounts
-- Mark these tests to run LAST in the flow order
-- Agent is allowed to lock/delete throwaway accounts
+### The ONLY valid reasons a step is untestable:
+1. Requires OTP/verification code from external email that cannot be accessed
+2. Requires interaction inside third-party WebView whose elements cannot be inspected
+3. Requires physical hardware input (camera, fingerprint)
+4. Requires real money payment processing
+
+### NEVER valid reasons (explicitly allowed):
+- "Creates real accounts" → allowed, it's dev
+- "Changes password" → allowed, use throwaway account
+- "Deletes data" → allowed, it's test data
+- "Requires server state" → set it up or test what you can
+- "File uploads" → try adb push
 
 ## Best Practices
 

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Generate Tests from Excel",
+  "description": "Reads an Excel (.xlsx) test script file (ground truth / manual test plan) and converts it into YAML test scripts organized by module in e2e-tests/ folder. This allows QA to upload their manual test plan and have it executed automatically.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Read prompt/ folder first for context. Find Excel (.xlsx) files in docs/, requirements/, or root that contain test scripts/test plans. Use read_file or write a short Python script (under 30 lines, save to file first then run) to parse the Excel. Look for columns like: Test Case, Test Steps, Expected Results, Module/Flow, Test No., Scenario. For each row in the Excel: 1) Determine which module it belongs to (from User Flow or Module column). 2) Convert to YAML test script format with: name, test_type, platform, precondition, steps (action/target/text/condition). 3) Save to e2e-tests/{module-name}/ folder. Group by module. Generate module-order.yaml based on flow dependencies found. Also generate prompt/ files (00-prerequisites, 01-testable-flows, 02-untestable-flows, 03-navigation-guide, 04-known-issues) based on what's in the Excel. Read e2e-tests/version.yaml — increment or set to 1. Output summary: modules found, test cases per module, total generated. TERMINAL RULES: NEVER use python3 -c, NEVER use cd &&, NEVER append 2>&1. Write .py scripts to file first then run."
+  }
+}

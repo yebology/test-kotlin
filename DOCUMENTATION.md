@@ -57,49 +57,65 @@ Open **Agent Hooks** panel in Kiro sidebar. You'll see 4 hooks:
 
 | # | Hook | What it does |
 |---|------|-------------|
-| 1 | **Generate Tests from Codebase** ▶️ | Scans source code → generates YAML test scripts |
+| 1 | **Generate Tests from Codebase** ▶️ | Scans source code → generates prompt/ + YAML test scripts per module |
 | 2 | **Generate Tests from Requirements** ▶️ | Reads docs (.md, .pdf, .docx) → generates YAML test scripts |
-| 3 | **Execute Test Scripts** ▶️ | Runs YAML scripts on device → screenshots → Excel report |
-| 4 | **Run Mobile E2E Tests** ▶️ | Quick mode — infers tests from UI directly, no YAML |
+| 3 | **Generate Tests from Excel** ▶️ | Reads Excel test plan (ground truth) → converts to YAML per module |
+| 4 | **Execute Test Scripts** ▶️ | Runs YAML scripts on device → screenshots → Excel report per module |
+| 5 | **Run Mobile E2E Tests** ▶️ | Quick mode — infers tests from UI directly, no YAML |
 
 ---
 
 ## Full Workflow (Recommended)
 
 ```
-STEP 1: Generate test scripts (pick one)
+STEP 1: Generate test scripts
 ┌─────────────────────────────────────────────────────────┐
 │                                                           │
 │  ▶️ "Generate Tests from Codebase"                        │
-│  → Reads prompt/*.md for context (if exists)              │
-│  → Scans source code (Compose/SwiftUI/XML)               │
-│  → Outputs: e2e-tests/*.yaml + coverage.yaml             │
+│  → Deep scans entire source code                         │
+│  → Auto-generates prompt/ files (prerequisites,          │
+│    testable flows, untestable boundaries, navigation,    │
+│    known issues)                                         │
+│  → Generates YAML test scripts PER MODULE:               │
+│    e2e-tests/sign-in/, e2e-tests/booking/, etc.         │
+│  → Each module has: happy path + negative + boundary     │
+│    + edge cases (comprehensive, strict QA)               │
 │  → Increments version.yaml                               │
 │                                                           │
 │  OR                                                       │
 │                                                           │
 │  ▶️ "Generate Tests from Requirements"                    │
-│  → Reads prompt/*.md for context (if exists)              │
-│  → Reads docs/ folder (.md, .pdf, .docx, .txt)           │
-│  → Outputs: e2e-tests/*.yaml + traceability.yaml         │
+│  → Reads prompt/*.md + docs/ folder (.md, .pdf, .docx)   │
+│  → Generates YAML test scripts + traceability.yaml       │
 │  → Increments version.yaml                               │
 │                                                           │
 └─────────────────────────────────────────────────────────┘
 
-STEP 2: Execute tests
+STEP 2: Execute tests (per module, in order)
 ┌─────────────────────────────────────────────────────────┐
 │                                                           │
 │  ▶️ "Execute Test Scripts"                                │
-│  → Reads prompt/*.md for context (credentials, etc.)      │
-│  → Reads e2e-tests/*.yaml                                │
-│  → Launches app on device                                │
-│  → Executes each step (tap, type, assert)                │
-│  → Screenshots every assertion                            │
-│  → Saves everything to e2e-runs/run-{DD-MM-YY}_(HH-MM)/ │
-│  → Generates e2e-test-report.xlsx                        │
+│  → Reads prompt/*.md for context                         │
+│  → Executes modules IN DEPENDENCY ORDER                  │
+│    (sign-in → home → booking → ticketing → ...)         │
+│  → Completes one module fully before moving to next      │
+│  → Maintains app state between modules (stays logged in) │
+│  → Writes to Excel after EACH test case                  │
+│  → Batch limit per session, auto-resumes on next click   │
+│  → Screenshots after final assertion per test case       │
 │                                                           │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### Test Environment Philosophy
+
+**This is a dev/test environment. The agent is allowed to:**
+- Create accounts freely
+- Change passwords, delete accounts
+- Create bookings, tickets, modify data
+- Do anything needed to test — it's not production
+
+**Untestable = per STEP, never per FLOW.** Agent tests all steps up to the point where automation truly cannot proceed (e.g., OTP input). Everything before that boundary is tested.
 
 ---
 
@@ -142,20 +158,27 @@ After a test run:
 
 ```
 your-project/
-├── e2e-tests/                              ← Test scripts (reusable)
-│   ├── 01-login-flow.yaml
-│   ├── 02-home-screen.yaml
+├── prompt/                                 ← Auto-generated context (by Generate hook)
+│   ├── 00-prerequisites.md
+│   ├── 01-testable-flows.md
+│   ├── 02-untestable-flows.md             ← Only specific STEPS, never entire flows
+│   ├── 03-navigation-guide.md
+│   └── 04-known-issues.md
+├── e2e-tests/                              ← Test scripts organized by module
+│   ├── module-order.yaml                   ← Execution order (dependencies)
+│   ├── sign-in/
+│   │   ├── SI-HP-001.yaml
+│   │   ├── SI-NP-001.yaml
+│   │   └── SI-EC-001.yaml
+│   ├── home-navigation/
+│   │   └── MN-HP-001.yaml
+│   ├── booking/
+│   │   └── BK-HP-001.yaml
 │   ├── coverage.yaml
 │   ├── traceability.yaml
-│   └── version.yaml                        ← TC version (auto-incremented)
+│   └── version.yaml
 └── e2e-runs/                               ← Run history
-    ├── run-08-06-26_(14-30)/
-    │   ├── metadata.yaml                   ← Device, date, pass/fail counts
-    │   ├── e2e-test-report.xlsx            ← Excel report
-    │   └── screenshots/                    ← All screenshots for this run
-    │       ├── e2e-android-01-login-pass.png
-    │       └── e2e-android-02-home-FAIL.png
-    └── run-09-06-26_(09-15)/
+    └── run-10-06-26_(14-30)/
         ├── metadata.yaml
         ├── e2e-test-report.xlsx
         └── screenshots/
@@ -165,28 +188,29 @@ your-project/
 
 ## Excel Report Format
 
-The Excel has **2 sheets:**
+The Excel has **one sheet per module** + a Coverage Summary sheet:
 
-### Sheet 1: Test Results
+### Module Sheets (e.g., "Home Landing", "Search", "Booking")
+
+Each module gets its own sheet with:
 
 | User Flow | Test No. | Test Scenario | Test Steps | Expected Results | Status | Actual Results | Screenshot |
 |-----------|----------|---------------|------------|-----------------|--------|---------------|------------|
-| Home | T001 | Greeting flow | 1. Tap name field... | "Hello, Kiro!" | Passed | "Hello, Kiro!" | e2e-android-01-pass.png |
-| Home | T002 | Empty name | 1. Tap Say Hello... | Error shown | Failed | Shows "Hello, !" | e2e-android-02-FAIL.png |
+| Home | HL-HP-001 | Landing loads | 1. Open app... | Home screen shown | Passed | Home screen shown | HL-HP-001.png |
 | ... | ... | ... | ... | ... | ... | ... | ... |
-| **Summary** | | | | | | **23 Passed, 2 Failed, 5 Skipped (Total: 30)** | |
+| **Summary** | | | | | | **5 Passed, 1 Failed, 0 Skipped (Total: 6)** | |
 
-### Sheet 2: Coverage Summary
+### Coverage Summary Sheet (last sheet)
 
 | Metric | Value |
 |--------|-------|
-| Total Test Cases | 30 |
-| Executed | 25 |
-| Passed | 23 |
-| Failed | 2 |
-| Skipped | 5 |
-| Pass Rate | 92% |
-| Coverage | 83% |
+| Total Test Cases | 50 |
+| Executed | 45 |
+| Passed | 40 |
+| Failed | 3 |
+| Skipped | 2 |
+| Pass Rate | 93% |
+| Coverage | 90% |
 
 **Rules:**
 - Passed → Actual Results = same as Expected
