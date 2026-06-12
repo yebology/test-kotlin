@@ -4,7 +4,7 @@
       "command": "npx",
       "args": ["-y", "@mobilenext/mobile-mcp@latest"],
       "env": {
-        "ANDROID_HOME": "YOUR_ANDROID_SDK_PATH"
+        "ANDROID_HOME": "/Users/yobel/Library/Android/sdk"
       }
     }
   }

@@ -1,0 +1,39 @@
+# ============================================================
+# Docker Compose for local containerized E2E execution.
+# Requires KVM support (Linux host with /dev/kvm accessible).
+#
+# Usage:
+#   docker compose -f deploy/docker-compose.yaml up --build
+#
+# Note: macOS does NOT support nested KVM — use native emulators instead.
+# This is primarily for CI/CD on Linux runners or EC2.
+# ============================================================
+
+services:
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    privileged: true
+    devices:
+      - /dev/kvm:/dev/kvm
+    volumes:
+      - ../e2e-tests:/app/e2e-tests:ro
+      - ../prompt:/app/prompt:ro
+      - results:/app/e2e-runs
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - E2E_WORKERS=4
+      - E2E_TIMEOUT=1800
+    deploy:
+      resources:
+        limits:
+          cpus: "8"
+          memory: 32G
+        reservations:
+          cpus: "4"
+          memory: 16G
+
+volumes:
+  results:
+    driver: local

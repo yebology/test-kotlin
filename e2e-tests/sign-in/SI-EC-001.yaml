@@ -1,0 +1,48 @@
+name: "Sign In - Invalid Email Format"
+description: "User sees error when entering malformed email"
+platform: [android, ios]
+precondition: "App is on sign-in screen"
+test_type: "boundary"
+module: "sign-in"
+test_id: "SI-EC-001"
+
+steps:
+  - action: tap
+    target:
+      label: "Email Input"
+    description: "Focus email field"
+
+  - action: type
+    text: "not-an-email"
+    description: "Enter malformed email without @ symbol"
+
+  - action: press_button
+    button: "BACK"
+    description: "Dismiss keyboard"
+
+  - action: tap
+    target:
+      label: "Password Input"
+    description: "Focus password field"
+
+  - action: type
+    text: "Test123!"
+    description: "Enter valid password"
+
+  - action: press_button
+    button: "BACK"
+    description: "Dismiss keyboard"
+
+  - action: tap
+    target:
+      label: "Sign In Button"
+    description: "Tap Sign In"
+
+  - action: assert
+    condition:
+      text_contains: "email"
+      exists: true
+    screenshot: true
+    description: "Verify email validation error is shown"
+
+expected_result: "Error message about invalid email format is displayed"

@@ -1,0 +1,11 @@
+version: "1"
+generated_date: "2026-06-11"
+generated_by: "Kiro Agent"
+generated_from: "codebase"
+source: "app/src/main/java/"
+total_test_cases: 0
+breakdown:
+  happy_path: 0
+  negative: 0
+  boundary: 0
+  state_transition: 0

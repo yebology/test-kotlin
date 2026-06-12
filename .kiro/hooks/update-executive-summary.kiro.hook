@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Update Executive Summary",
+  "description": "Recalculates the Executive Summary sheet by counting actual Status values from all module sheets. Fixes any mismatch between summary and actual data. Run this after all test batches are complete.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Open the latest Excel report in e2e-runs/ folder. For EACH module sheet (skip Executive Summary and Coverage Summary sheets): count the actual number of rows with Status = 'Passed', 'Failed', 'Skip'/'Skipped' in the Status column. Then REWRITE the Executive Summary sheet completely with accurate numbers: 1) Module Overview table (Module Name, Total, Passed, Failed, Skipped, Pass Rate %) — derived from actual counts per sheet. Add TOTAL row at bottom. 2) Bugs table PER MODULE — only for modules with Failed tests. Columns: Test Case ID, Severity (Critical/High/Medium/Low), Reason (from Actual Results column of failed row). 3) Overall Metrics table: Test Date, TC Version (from e2e-tests/version.yaml), Device, Total Modules, Total Test Cases, Overall Pass Rate, Coverage %. 4) Key Findings table — insights from the data. 5) Untestable Steps table (from prompt/02-untestable-flows.md if exists). ALL in table format with borders on every cell. Write a short .py script to do this — NEVER use python3 -c. NEVER append 2>&1."
+  }
+}

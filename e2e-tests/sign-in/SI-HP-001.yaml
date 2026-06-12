@@ -1,0 +1,52 @@
+name: "Sign In - Valid Credentials"
+description: "User can sign in with correct email and password"
+platform: [android, ios]
+precondition: "App is on sign-in screen, user is logged out"
+test_type: "happy_path"
+module: "sign-in"
+test_id: "SI-HP-001"
+
+steps:
+  - action: tap
+    target:
+      label: "Email Input"
+      text: "Email"
+    description: "Focus email field"
+
+  - action: type
+    text: "testuser@company.com"
+    description: "Enter valid email"
+
+  - action: press_button
+    button: "BACK"
+    description: "Dismiss keyboard"
+
+  - action: tap
+    target:
+      label: "Password Input"
+      text: "Password"
+    description: "Focus password field"
+
+  - action: type
+    text: "Test123!"
+    description: "Enter valid password"
+
+  - action: press_button
+    button: "BACK"
+    description: "Dismiss keyboard"
+
+  - action: tap
+    target:
+      label: "Sign In Button"
+      text: "Sign In"
+    description: "Tap Sign In button"
+
+  - action: assert
+    condition:
+      element:
+        label: "Home Screen"
+      exists: true
+    screenshot: true
+    description: "Verify user navigates to home screen after successful sign in"
+
+expected_result: "User is navigated to Home screen after entering valid credentials"

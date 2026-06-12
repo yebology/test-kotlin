@@ -1,0 +1,27 @@
+{
+  "name": "e2e-orchestrator",
+  "version": "1.0.0",
+  "description": "Multi-agent E2E test orchestrator for parallel Android emulator execution",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/wizard.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "bin": {
+    "e2e-wizard": "./wizard.sh"
+  },
+  "dependencies": {
+    "@clack/prompts": "0.9.1",
+    "exceljs": "4.4.0",
+    "execa": "9.5.2",
+    "ora": "8.2.0",
+    "picocolors": "1.1.1",
+    "yaml": "2.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.3",
+    "tsx": "4.19.4",
+    "typescript": "5.8.3"
+  }
+}

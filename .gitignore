@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+orchestrator/dist/
+
+# Generated prompts (ephemeral)
+orchestrator/generated-prompts/
+
+# Temp MCP configs and workspaces
+orchestrator/.tmp-mcp-configs/
+orchestrator/.tmp-workspaces/
+
+# Cloned repos (local only)
+orchestrator/repos/
+
+# Run results (potentially large, keep local)
+e2e-runs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
