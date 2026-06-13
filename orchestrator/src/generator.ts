@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execaCommand } from 'execa';
 import type { OrchestratorConfig, GenerateSource } from './types.js';
-import { type ModelConfig, getApiKey } from './models.js';
+import { type ModelConfig, getApiKey, getBaseUrl } from './models.js';
 
 export type { GenerateSource };
 
@@ -332,7 +332,7 @@ export async function runGenerator(
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     onProgress?.(`Turn ${turn + 1}/${MAX_TURNS}...`);
 
-    const response = await callOpenAI(apiKey, model.apiModel, messages);
+    const response = await callOpenAI(apiKey, model.apiModel, messages, getBaseUrl(model));
 
     // Check if done (no tool calls)
     if (!response.tool_calls || response.tool_calls.length === 0) {
@@ -372,7 +372,8 @@ export async function runGenerator(
 async function callOpenAI(
   apiKey: string,
   model: string,
-  messages: unknown[]
+  messages: unknown[],
+  baseUrl?: string
 ): Promise<{ content: string; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }> {
   const tools = GENERATOR_TOOLS.map((t) => ({
     type: 'function' as const,
@@ -383,7 +384,9 @@ async function callOpenAI(
     },
   }));
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const url = `${baseUrl || 'https://api.openai.com/v1'}/chat/completions`;
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -16,6 +16,10 @@ export interface ModelConfig {
   apiModel: string;
   /** Environment variable name for the API key */
   envKey: string;
+  /** Environment variable name for custom base URL (optional) */
+  baseUrlEnvKey: string;
+  /** Default base URL if env not set */
+  defaultBaseUrl: string;
   /** Cost hint shown to user */
   costHint: string;
 }
@@ -31,6 +35,8 @@ export const MODELS: ModelConfig[] = [
     provider: 'openai',
     apiModel: 'gpt-3.5-turbo',
     envKey: 'OPENAI_API_KEY',
+    baseUrlEnvKey: 'OPENAI_BASE_URL',
+    defaultBaseUrl: 'https://api.openai.com/v1',
     costHint: '~$0.05-0.15 per generate (cheapest)',
   },
   {
@@ -39,6 +45,8 @@ export const MODELS: ModelConfig[] = [
     provider: 'openai',
     apiModel: 'gpt-4o-mini',
     envKey: 'OPENAI_API_KEY',
+    baseUrlEnvKey: 'OPENAI_BASE_URL',
+    defaultBaseUrl: 'https://api.openai.com/v1',
     costHint: '~$0.15-0.50 per generate (recommended)',
   },
 ];
@@ -78,4 +86,13 @@ export function hasApiKey(model: ModelConfig): boolean {
  */
 export function getApiKey(model: ModelConfig): string | undefined {
   return process.env[model.envKey];
+}
+
+/**
+ * Gets the base URL for a model (custom or default).
+ * @param model - Model config
+ * @returns Base URL string
+ */
+export function getBaseUrl(model: ModelConfig): string {
+  return process.env[model.baseUrlEnvKey] || model.defaultBaseUrl;
 }

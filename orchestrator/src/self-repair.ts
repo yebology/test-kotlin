@@ -8,7 +8,7 @@
  * Cost: ~$0.01-0.05 per repair call (only on failure, not every step).
  */
 
-import { getApiKey, getDefaultModel, type ModelConfig } from './models.js';
+import { getApiKey, getBaseUrl, getDefaultModel, type ModelConfig } from './models.js';
 import { McpClient } from './mcp-client.js';
 
 interface RepairSuggestion {
@@ -93,7 +93,8 @@ If nothing matches at all, respond: {"x": 0, "y": 0, "reasoning": "no match foun
  * Calls OpenAI for repair suggestion.
  */
 async function callRepairAI(apiKey: string, model: string, prompt: string): Promise<RepairSuggestion | null> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const baseUrl = getBaseUrl(getDefaultModel());
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
