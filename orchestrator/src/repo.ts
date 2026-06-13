@@ -8,9 +8,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execa } from 'execa';
 
-/** Where cloned repos are stored (inside orchestrator, gitignored) */
-const REPOS_DIR = 'repos';
-
 interface RepoConfig {
   /** Full repo URL (HTTPS or SSH) */
   url: string;
@@ -21,19 +18,18 @@ interface RepoConfig {
 }
 
 /**
- * Clones a repo (or pulls latest if already cloned).
+ * Clones a repo into the target directory (or pulls latest if already cloned).
  * Returns the absolute path to the cloned directory.
  *
- * @param baseDir - Orchestrator base directory
+ * @param targetDir - Where to clone to (e.g., repos/projectname/android/)
  * @param config - Repo configuration
  * @returns Absolute path to cloned repo
  */
-export async function cloneOrPullRepo(baseDir: string, config: RepoConfig): Promise<string> {
-  const reposDir = path.join(baseDir, REPOS_DIR);
-  fs.mkdirSync(reposDir, { recursive: true });
+export async function cloneOrPullRepo(targetDir: string, config: RepoConfig): Promise<string> {
+  fs.mkdirSync(targetDir, { recursive: true });
 
   const repoName = extractRepoName(config.url);
-  const repoPath = path.join(reposDir, repoName);
+  const repoPath = path.join(targetDir, repoName);
 
   // Build authenticated URL
   const authUrl = buildAuthUrl(config.url, config.token);
@@ -92,15 +88,19 @@ function buildAuthUrl(url: string, token?: string): string {
     urlObj.username = 'oauth2';
     urlObj.password = token;
   } else if (url.includes('bitbucket')) {
-    // Bitbucket Cloud: email:api_token
-    if (token.includes(':')) {
+    // Bitbucket: URL sudah ada username (e.g., https://user@bitbucket.org/...)
+    // Token di-inject setelah username → https://user:token@bitbucket.org/...
+    if (url.match(/:\/\/[^@]+@/)) {
+      // URL already has username — inject token as password
+      urlObj.password = encodeURIComponent(token);
+    } else if (token.includes(':')) {
+      // Token format: username:token
       const colonIdx = token.indexOf(':');
-      const email = token.slice(0, colonIdx);
-      const apiToken = token.slice(colonIdx + 1);
-      urlObj.username = encodeURIComponent(email);
-      urlObj.password = encodeURIComponent(apiToken);
+      urlObj.username = encodeURIComponent(token.slice(0, colonIdx));
+      urlObj.password = encodeURIComponent(token.slice(colonIdx + 1));
     } else {
-      urlObj.password = token;
+      // Just token, no username in URL
+      urlObj.password = encodeURIComponent(token);
     }
   } else {
     // GitHub / generic: token as username

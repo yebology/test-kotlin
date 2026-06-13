@@ -127,8 +127,6 @@ export async function executeModule(
 
   const platform = detectPlatform(deviceId);
   const testDir = path.join(config.e2eTestsDir, module.folder);
-  const screenshotsDir = path.join(runDir, 'screenshots');
-  fs.mkdirSync(screenshotsDir, { recursive: true });
 
   // Disable stylus on Android (prevents input overlay)
   if (platform === 'android') {
@@ -138,6 +136,10 @@ export async function executeModule(
   // Load YAML test scripts
   const yamlFiles = fs.readdirSync(testDir).filter((f) => f.endsWith('.yaml')).sort();
   const results: TestResult[] = [];
+
+  // Create per-module screenshot subfolder
+  const moduleScreenshotsDir = path.join(runDir, 'screenshots', module.folder);
+  fs.mkdirSync(moduleScreenshotsDir, { recursive: true });
 
   for (let i = 0; i < yamlFiles.length; i++) {
     const file = yamlFiles[i];
@@ -151,7 +153,7 @@ export async function executeModule(
     try {
       const content = fs.readFileSync(path.join(testDir, file), 'utf-8');
       const script = parseYaml(content) as TestScript;
-      result = await executeTestCase(script, testId, deviceId, platform, screenshotsDir, mcp);
+      result = await executeTestCase(script, testId, deviceId, platform, moduleScreenshotsDir, mcp);
     } catch (err) {
       result = {
         testId,

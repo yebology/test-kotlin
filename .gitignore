@@ -32,3 +32,12 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# Prompt
+prompt/
+
+# Docs
+docs/
+
+# Test Module
+e2e-tests/

@@ -33,10 +33,10 @@ generate-excel: install ## Generate tests from Excel (.xlsx)
 	@cd $(ORCH_DIR) && ./wizard.sh --generate excel
 
 execute: install ## Execute tests (parallel, deterministic)
-	@cd $(ORCH_DIR) && ./wizard.sh --workers 2
+	@cd $(ORCH_DIR) && ./wizard.sh --execute --workers 2
 
 execute-4: install ## Execute tests with 4 workers
-	@cd $(ORCH_DIR) && ./wizard.sh --workers 4
+	@cd $(ORCH_DIR) && ./wizard.sh --execute --workers 4
 
 resume: install ## Resume interrupted run
 	@cd $(ORCH_DIR) && ./wizard.sh --resume

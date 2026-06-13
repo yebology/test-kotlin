@@ -36,24 +36,30 @@ export function formatAgentStatus(agent: AgentProcess): string {
   const symbol = STATUS_SYMBOLS[agent.status];
   const colorFn = STATUS_COLORS[agent.status];
 
-  const total = agent.testCasesPassed + agent.testCasesFailed + agent.testCasesSkipped;
   let detail: string;
 
   switch (agent.status) {
     case 'pending':
       detail = `waiting (${agent.testCasesTotal} tests)`;
       break;
-    case 'running':
-      detail = `running (${total}/${agent.testCasesTotal})`;
+    case 'running': {
+      const done = agent.testCasesPassed + agent.testCasesFailed + agent.testCasesSkipped;
+      const parts = [];
+      if (agent.testCasesPassed > 0) parts.push(pc.green(`${agent.testCasesPassed}✔`));
+      if (agent.testCasesFailed > 0) parts.push(pc.red(`${agent.testCasesFailed}✖`));
+      if (agent.testCasesSkipped > 0) parts.push(pc.gray(`${agent.testCasesSkipped}⊘`));
+      const progress = parts.length > 0 ? parts.join(' ') : '0';
+      detail = `running (${done}/${agent.testCasesTotal}) ${progress}`;
       break;
+    }
     case 'passed':
-      detail = `${agent.testCasesPassed}/${agent.testCasesTotal} passed`;
+      detail = `${pc.green(`${agent.testCasesPassed}✔`)} ${agent.testCasesFailed > 0 ? pc.red(`${agent.testCasesFailed}✖`) : ''} ${agent.testCasesSkipped > 0 ? pc.gray(`${agent.testCasesSkipped}⊘`) : ''} (${agent.testCasesTotal} total)`.trim();
       break;
     case 'failed':
-      detail = `${agent.testCasesPassed} passed, ${agent.testCasesFailed} failed`;
+      detail = `${pc.green(`${agent.testCasesPassed}✔`)} ${pc.red(`${agent.testCasesFailed}✖`)} ${agent.testCasesSkipped > 0 ? pc.gray(`${agent.testCasesSkipped}⊘`) : ''} (${agent.testCasesTotal} total)`.trim();
       break;
     case 'timeout':
-      detail = `timed out (${total}/${agent.testCasesTotal} completed)`;
+      detail = `timed out — ${pc.green(`${agent.testCasesPassed}✔`)} ${pc.red(`${agent.testCasesFailed}✖`)} ${pc.gray(`${agent.testCasesSkipped}⊘`)}`;
       break;
     case 'skipped':
       detail = 'skipped';

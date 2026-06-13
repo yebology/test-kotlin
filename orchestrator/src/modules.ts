@@ -16,12 +16,18 @@ import type { ModuleDefinition, ModuleOrder, OrchestratorConfig } from './types.
  * @returns Array of module definitions in execution order
  */
 export function loadModuleOrder(config: OrchestratorConfig): ModuleDefinition[] {
+  if (!config.e2eTestsDir) return [];
   const orderFile = path.join(config.e2eTestsDir, 'module-order.yaml');
 
   if (fs.existsSync(orderFile)) {
     const content = fs.readFileSync(orderFile, 'utf-8');
-    const parsed = parseYaml(content) as ModuleOrder;
-    return parsed.modules;
+    const parsed = parseYaml(content) as { modules?: Array<Record<string, unknown>> };
+    const modules = (parsed.modules || []).map((m) => ({
+      name: String(m.name || ''),
+      folder: String(m.folder || m.name || ''),
+      depends_on: Array.isArray(m.dependencies) ? m.dependencies.map(String) : (Array.isArray(m.depends_on) ? m.depends_on.map(String) : undefined),
+    }));
+    return modules.filter((m) => m.name && m.folder);
   }
 
   // Auto-discover modules from directory structure
@@ -68,6 +74,7 @@ function discoverModules(e2eTestsDir: string): ModuleDefinition[] {
  * @returns Number of test case YAML files
  */
 export function countTestCases(config: OrchestratorConfig, moduleFolder: string): number {
+  if (!config.e2eTestsDir) return 0;
   const modulePath = path.join(config.e2eTestsDir, moduleFolder);
   if (!fs.existsSync(modulePath)) return 0;
 

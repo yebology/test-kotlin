@@ -22,11 +22,9 @@ import { mergeReports } from './report-merger.js';
 import { createRunDirectory, findResumableRun, getIncompleteModules, writeMetadata, updateMetadata } from './resume.js';
 import { printProgressHeader, renderProgress, printFinalSummary } from './progress.js';
 import { listRuns, compareRuns, printComparison } from './compare-runs.js';
-import { MODELS, getModel, getDefaultModel, hasApiKey } from './models.js';
-import { cloneOrPullRepo, getRepoConfigFromEnv } from './repo.js';
+import { cloneOrPullRepo } from './repo.js';
 import { showTestPlanApproval, writeTestPlan } from './test-plan.js';
 import { generateReport } from './report-generator.js';
-import { generateFromRecipes } from './recipes.js';
 import type { ModuleDefinition, Emulator, AgentProcess, GenerateSource } from './types.js';
 
 async function main(): Promise<void> {
@@ -43,18 +41,18 @@ async function main(): Promise<void> {
     mode = `generate-${options.generate}`;
   } else if (options.compare) {
     mode = 'compare';
-  } else if (options.resume) {
+  } else if (options.resume || options.execute) {
     mode = 'execute';
   } else {
     const selected = await p.select({
-      message: 'What would you like to do?',
+      message: 'What would you like to do? (↑↓ navigate, Enter select)',
       options: [
-        { value: 'generate-codebase', label: '🔍 Generate tests from codebase', hint: 'AI scans code → YAML (cost: ~$2)' },
-        { value: 'generate-requirements', label: '📄 Generate tests from requirements', hint: 'AI reads docs → YAML (cost: ~$1)' },
-        { value: 'generate-excel', label: '📊 Generate tests from Excel', hint: 'AI reads .xlsx → YAML (cost: ~$1)' },
+        { value: 'generate-codebase', label: '🔍 Generate tests from codebase', hint: 'AI scans code → YAML' },
+        { value: 'generate-requirements', label: '📄 Generate tests from requirements', hint: 'AI reads docs → YAML' },
+        { value: 'generate-excel', label: '📊 Generate tests from Excel', hint: 'AI reads .xlsx → YAML' },
         { value: 'execute', label: '▶️  Execute tests (parallel)', hint: 'deterministic, $0 per run' },
         { value: 'full', label: '🚀 Full pipeline (generate + execute)', hint: 'generate then execute' },
-        { value: 'compare', label: '📈 Compare runs', hint: 'detect regressions' },
+        { value: 'compare', label: '📈 Compare runs', hint: 'detect regressions between 2 runs' },
       ],
     });
 
@@ -85,28 +83,68 @@ async function main(): Promise<void> {
   // ─── GENERATE MODE (requires API key) ─────────────────────────────
   if (mode === 'generate-codebase' || mode === 'generate-requirements' || mode === 'generate-excel' || mode === 'full') {
 
-    // Clone/pull source repo if configured
-    let repoConfig = getRepoConfigFromEnv();
+    // Clone from remote repo (interactive)
+    let repoConfig: { url: string; token?: string; branch?: string } | null = null;
+    let projectName = '';
+    let platform: 'android' | 'ios' = 'android';
 
-    if (!repoConfig && (mode === 'generate-codebase' || mode === 'full')) {
-      const useRepo = await p.confirm({
-        message: 'Clone source code from a remote repo?',
-        initialValue: false,
+    if (mode === 'generate-codebase' || mode === 'full') {
+      // Project name
+      const nameInput = await p.text({ message: 'Project name (used for folder naming):', placeholder: 'my-app' });
+      if (p.isCancel(nameInput)) { p.cancel('Cancelled.'); process.exit(0); }
+      projectName = (nameInput as string).trim().toLowerCase().replace(/\s+/g, '-');
+
+      // Platform
+      const platformChoice = await p.select({
+        message: 'Platform (↑↓ navigate, Enter select):',
+        options: [
+          { value: 'android', label: '🤖 Android', hint: 'scans .kt, .xml files' },
+          { value: 'ios', label: '🍎 iOS', hint: 'scans .swift, .storyboard files' },
+        ],
+      });
+      if (p.isCancel(platformChoice)) { p.cancel('Cancelled.'); process.exit(0); }
+      platform = platformChoice as 'android' | 'ios';
+
+      // Source
+      const source = await p.select({
+        message: 'Where is the source code? (↑↓ navigate, Enter select)',
+        options: [
+          { value: 'local', label: '📁 Local folder', hint: 'source code already on this machine' },
+          { value: 'github', label: '🐙 GitHub', hint: 'clone via HTTPS + token' },
+          { value: 'bitbucket', label: '🪣 Bitbucket', hint: 'clone via HTTPS + access token' },
+          { value: 'gitlab', label: '🦊 GitLab', hint: 'clone via HTTPS + access token' },
+          { value: 'codecommit', label: '☁️  AWS CodeCommit', hint: 'clone via HTTPS + git credentials' },
+        ],
       });
 
-      if (!p.isCancel(useRepo) && useRepo) {
+      if (p.isCancel(source)) { p.cancel('Cancelled.'); process.exit(0); }
+
+      if (source !== 'local') {
         const repoUrl = await p.text({ message: 'Repo URL (HTTPS):' });
         if (p.isCancel(repoUrl)) { p.cancel('Cancelled.'); process.exit(0); }
 
-        const repoToken = await p.text({
-          message: 'Auth token (username:password or PAT, leave empty for public):',
-          placeholder: 'optional',
-        });
+        let tokenMessage = 'Auth token (leave empty for public):';
+        let tokenPlaceholder = 'optional';
 
-        const repoBranch = await p.text({
-          message: 'Branch (leave empty for default):',
-          placeholder: 'main',
-        });
+        if (source === 'github') {
+          tokenMessage = 'GitHub Personal Access Token:';
+          tokenPlaceholder = 'ghp_xxxx';
+        } else if (source === 'bitbucket') {
+          tokenMessage = 'Bitbucket Access Token:';
+          tokenPlaceholder = 'ATTTxxxx';
+        } else if (source === 'gitlab') {
+          tokenMessage = 'GitLab Access Token:';
+          tokenPlaceholder = 'glpat-xxxx';
+        } else if (source === 'codecommit') {
+          tokenMessage = 'CodeCommit HTTPS Git credentials (username:password):';
+          tokenPlaceholder = 'username:password';
+        }
+
+        const repoToken = await p.text({ message: tokenMessage, placeholder: tokenPlaceholder });
+        if (p.isCancel(repoToken)) { p.cancel('Cancelled.'); process.exit(0); }
+
+        const repoBranch = await p.text({ message: 'Branch:', placeholder: 'main (default)' });
+        if (p.isCancel(repoBranch)) { p.cancel('Cancelled.'); process.exit(0); }
 
         repoConfig = {
           url: repoUrl as string,
@@ -120,11 +158,11 @@ async function main(): Promise<void> {
       const s = p.spinner();
       s.start('Cloning repository...');
       try {
-        const repoPath = await cloneOrPullRepo(path.join(config.projectRoot, 'orchestrator'), repoConfig);
-        // Point project root to cloned repo for scanning
+        // Clone to repos/{projectName}/{platform}/
+        const reposBase = path.join(config.projectRoot, 'orchestrator', 'repos', projectName, platform);
+        const repoPath = await cloneOrPullRepo(reposBase, repoConfig);
+        // Point project root to cloned repo for SOURCE CODE scanning
         config.projectRoot = repoPath;
-        config.e2eTestsDir = path.join(repoPath, 'e2e-tests');
-        config.promptDir = path.join(repoPath, 'prompt');
         s.stop(`Repo ready: ${repoPath}`);
       } catch (err) {
         s.stop('Clone failed.');
@@ -133,31 +171,22 @@ async function main(): Promise<void> {
       }
     }
 
-    // Model selection
-    let modelId = options.model;
+    // Model selection for kiro-cli
+    const { KIRO_MODELS } = await import('./generator.js');
 
-    if (!modelId) {
-      const modelChoice = await p.select({
-        message: 'Select AI model for generation:',
-        options: MODELS.map((m) => ({
-          value: m.id,
-          label: m.label,
-          hint: m.costHint,
-        })),
-        initialValue: getDefaultModel().id,
-      });
+    const modelChoice = await p.select({
+      message: 'Select AI model (↑↓ navigate, Enter select):',
+      options: KIRO_MODELS.map((m) => ({
+        value: m.id,
+        label: m.label,
+        hint: m.hint,
+      })),
+      initialValue: 'auto',
+    });
+    if (p.isCancel(modelChoice)) { p.cancel('Cancelled.'); process.exit(0); }
+    const selectedModel = modelChoice as string;
 
-      if (p.isCancel(modelChoice)) { p.cancel('Cancelled.'); process.exit(0); }
-      modelId = modelChoice as string;
-    }
-
-    const model = getModel(modelId) || getDefaultModel();
-
-    if (!hasApiKey(model)) {
-      p.cancel(`${model.envKey} not set. Export it or add to .env file.`);
-      process.exit(1);
-    }
-
+    // kiro-cli handles model selection internally (Claude, included in subscription)
     const source: GenerateSource = mode === 'generate-requirements'
       ? 'requirements'
       : mode === 'generate-excel'
@@ -165,10 +194,10 @@ async function main(): Promise<void> {
         : 'codebase';
 
     const s = p.spinner();
-    s.start(`Generating with ${model.label} from ${source}...`);
+    s.start(`Generating test scripts from ${source} via kiro-cli...`);
 
     try {
-      const summary = await runGenerator(config, source, model, (msg) => s.message(msg));
+      const summary = await runGenerator(config, source, selectedModel, platform, (msg) => s.message(msg));
       s.stop('Test scripts generated.');
       p.log.success(summary || 'Done. Check e2e-tests/ folder.');
     } catch (err) {
@@ -218,28 +247,7 @@ async function main(): Promise<void> {
 
   modulesToRun = filterModules(modulesToRun, options.modules);
 
-  // Module selection
-  if (!options.modules && !options.resume) {
-    const choices = modulesToRun.map((m) => ({
-      value: m.folder,
-      label: `${m.name} (${countTestCases(config, m.folder)} tests)`,
-    }));
-    const selected = await p.multiselect({
-      message: 'Select modules:',
-      options: choices,
-      initialValues: choices.map((c) => c.value),
-    });
-    if (p.isCancel(selected)) { p.cancel('Cancelled.'); process.exit(0); }
-    modulesToRun = modulesToRun.filter((m) => (selected as string[]).includes(m.folder));
-  }
-
-  // Generate any recipe-based tests
-  const recipeCount = generateFromRecipes(config);
-  if (recipeCount > 0) {
-    p.log.info(`Generated ${recipeCount} tests from recipes.`);
-  }
-
-  // Test plan approval (human gate)
+  // Test plan approval (human gate) — includes module selection
   const approved = await showTestPlanApproval(config, modulesToRun);
   if (!approved) {
     p.cancel('Execution cancelled.');
@@ -253,10 +261,10 @@ async function main(): Promise<void> {
   // Worker count
   const maxW = Math.min(options.workers, modulesToRun.length);
   const wc = await p.select({
-    message: `Parallel workers? (${modulesToRun.length} modules)`,
+    message: `Parallel workers? (↑↓ navigate, enter confirm)`,
     options: Array.from({ length: Math.min(4, modulesToRun.length) }, (_, i) => ({
       value: i + 1,
-      label: `${i + 1} worker${i > 0 ? 's' : ''}`,
+      label: `${i + 1} worker${i > 0 ? 's' : ''} (${i + 1} emulator${i > 0 ? 's' : ''})`,
       hint: i + 1 === maxW ? 'recommended' : undefined,
     })),
     initialValue: maxW,

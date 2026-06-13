@@ -70,10 +70,10 @@ export async function showTestPlanApproval(
 
   // Ask for approval
   const action = await p.select({
-    message: 'How would you like to proceed?',
+    message: 'How would you like to proceed? (↑↓ navigate, Enter select)',
     options: [
       { value: 'approve', label: '✅ Approve and execute all', hint: `run all ${plan.totalTests} tests` },
-      { value: 'select', label: '🔧 Select specific modules', hint: 'choose which modules to run' },
+      { value: 'select', label: '🔧 Select specific modules', hint: 'Space toggle, Enter confirm' },
       { value: 'details', label: '📄 Show detailed plan', hint: 'list every test case' },
       { value: 'cancel', label: '❌ Cancel', hint: 'go back' },
     ],
@@ -103,10 +103,11 @@ export async function showTestPlanApproval(
     const choices = plan.modules.map((m) => ({
       value: m.folder,
       label: `${m.name} (${m.testCount} tests)`,
+      hint: m.tests.map((t) => t.type).filter((v, i, a) => a.indexOf(v) === i).join(', '),
     }));
 
     const selected = await p.multiselect({
-      message: 'Select modules to execute:',
+      message: 'Select modules to execute (space = toggle, enter = confirm):',
       options: choices,
       initialValues: choices.map((c) => c.value),
     });
@@ -149,7 +150,7 @@ function buildTestPlan(config: OrchestratorConfig, modules: ModuleDefinition[]):
 
         const testId = file.replace('.yaml', '');
         const level = parsed.level || 'L2';
-        const type = parsed.test_type || 'unknown';
+        const type = parsed.test_type || inferTestType(testId, parsed.name || '');
 
         entry.tests.push({ id: testId, name: parsed.name || testId, type, level });
 
@@ -186,4 +187,16 @@ export function writeTestPlan(config: OrchestratorConfig, modules: ModuleDefinit
   }
 
   fs.writeFileSync(path.join(runDir, 'test-plan.md'), content, 'utf-8');
+}
+
+
+/**
+ * Infers test type from filename or test name.
+ */
+function inferTestType(testId: string, name: string): string {
+  const combined = (testId + ' ' + name).toLowerCase();
+  if (combined.includes('negative') || combined.includes('invalid') || combined.includes('error') || combined.includes('wrong')) return 'negative';
+  if (combined.includes('boundary') || combined.includes('edge') || combined.includes('limit') || combined.includes('max') || combined.includes('min')) return 'boundary';
+  if (combined.includes('edge') || combined.includes('transition') || combined.includes('interrupt')) return 'edge_case';
+  return 'happy_path';
 }

@@ -23,7 +23,8 @@ const DEFAULT_BATCH_SIZE = 10;
  * @returns Absolute path to project root
  */
 export function getProjectRoot(): string {
-  return path.resolve(import.meta.dirname, '..', '..');
+  // wizard.sh runs from orchestrator/ dir. Project root = parent.
+  return path.resolve(process.cwd(), '..');
 }
 
 /**
@@ -86,6 +87,9 @@ export function parseArgs(args: string[]): CliOptions {
         break;
       case '--compare':
         options.compare = true;
+        break;
+      case '--execute':
+        options.execute = true;
         break;
       case '--model':
         options.model = args[++i];

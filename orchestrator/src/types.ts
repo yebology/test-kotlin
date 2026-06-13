@@ -100,6 +100,7 @@ export interface CliOptions {
   apkPath?: string;
   generate?: GenerateSource;
   compare?: boolean;
+  execute?: boolean;
   model?: string;
 }
 
